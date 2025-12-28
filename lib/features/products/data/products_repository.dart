@@ -22,7 +22,6 @@ class ProductsRepository {
           .doc(hotelId)
           .collection('products');
     } else {
-      // 🔹 Apply Role-Based Filtering for Global Search
       collectionRef = _db.collectionGroup('products');
       if (currentUser != null &&
           currentUser.role.toLowerCase() != 'superadmin') {
@@ -37,6 +36,26 @@ class ProductsRepository {
       }
     }
 
+    // 🔹 Apply Server-Side Filtering
+    if (supplier != null && supplier.isNotEmpty) {
+      collectionRef = collectionRef.where('supplier', isEqualTo: supplier);
+    }
+    if (uom != null && uom.isNotEmpty) {
+      collectionRef = collectionRef.where('uom', isEqualTo: uom);
+    }
+    if (inventoryUom != null && inventoryUom.isNotEmpty) {
+      collectionRef = collectionRef.where(
+        'inventoryUom',
+        isEqualTo: inventoryUom,
+      );
+    }
+    if (category != null && category.isNotEmpty) {
+      collectionRef = collectionRef.where(
+        'categories',
+        arrayContains: category,
+      );
+    }
+
     return collectionRef.snapshots().map((snap) {
       var list = snap.docs
           .where((doc) => doc.reference.path.split('/').length == 4)
@@ -48,21 +67,7 @@ class ProductsRepository {
           )
           .toList();
 
-      // Client-side filtering
-      if (supplier != null && supplier.isNotEmpty) {
-        list = list.where((p) => p.supplier == supplier).toList();
-      }
-      if (uom != null && uom.isNotEmpty) {
-        list = list.where((p) => p.uom == uom).toList();
-      }
-      if (inventoryUom != null && inventoryUom.isNotEmpty) {
-        list = list.where((p) => p.inventoryUom == inventoryUom).toList();
-      }
-      if (category != null && category.isNotEmpty) {
-        list = list.where((p) => p.categories.contains(category)).toList();
-      }
-
-      // Client-side sorting
+      // Client-side sorting (Firestore sorting would require even more complex indexes)
       list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
       if (query == null || query.isEmpty) return list;

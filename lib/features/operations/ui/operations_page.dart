@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ftrace_web/core/widgets/top_bar.dart';
+import 'package:ftrace_web/core/widgets/responsive_table.dart';
 import 'package:ftrace_web/features/operations/bloc/operations_event.dart';
 import 'package:ftrace_web/features/operations/bloc/operations_state.dart';
 import 'package:intl/intl.dart';
@@ -18,19 +19,32 @@ class OperationsPage extends StatefulWidget {
 class _OperationsPageState extends State<OperationsPage> {
   int _selectedTab = 0; // 0 for Receiving, 1 for Kitchen Storages
   Set<ReceivingModel> _selectedOperations = {};
-  late List<ReceivingModel> _currentOperation;
+  List<ReceivingModel>? _currentOperation;
+  Set<KitchenStorageModel> _selectedMovements = {};
+  List<KitchenStorageModel>? _currentMovements;
 
-  bool get _isAllSelected =>
-      _selectedOperations.length == _currentOperation.length;
+  bool get _isAllSelected => _selectedTab == 0
+      ? (_currentOperation != null &&
+            _currentOperation!.isNotEmpty &&
+            _selectedOperations.length == _currentOperation!.length)
+      : (_currentMovements != null &&
+            _currentMovements!.isNotEmpty &&
+            _selectedMovements.length == _currentMovements!.length);
 
-  bool get _isNoneSelected => _selectedOperations.isEmpty;
-  int get _selectedCount => _selectedOperations.length;
+  bool get _isNoneSelected => _selectedTab == 0
+      ? _selectedOperations.isEmpty
+      : _selectedMovements.isEmpty;
 
-  bool get _showDeleteButton => _selectedOperations.isNotEmpty;
+  int get _selectedCount => _selectedTab == 0
+      ? _selectedOperations.length
+      : _selectedMovements.length;
+
+  bool get _showDeleteButton => _selectedCount > 0;
+
   bool? get _headerCheckboxValue {
     if (_isNoneSelected) return false;
     if (_isAllSelected) return true;
-    return null; // 🔹 indeterminate
+    return null;
   }
 
   @override
@@ -42,7 +56,7 @@ class _OperationsPageState extends State<OperationsPage> {
         builder: (context) {
           final width = MediaQuery.of(context).size.width;
           final isMobileNav = width < 900;
-          final isTableCompact = width < 1350;
+          final isMobile = width < 600;
 
           return Column(
             children: [
@@ -65,11 +79,10 @@ class _OperationsPageState extends State<OperationsPage> {
                 const TopBar(title: "Operations"),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: EdgeInsets.all(isMobile ? 12.0 : 24.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // TABS
                       Row(
                         children: [
                           _tabButton(
@@ -88,22 +101,44 @@ class _OperationsPageState extends State<OperationsPage> {
                         ],
                       ),
                       const SizedBox(height: 24),
-
-                      // LIST CONTAINER
+                      if (_showDeleteButton) _buildDeleteBar(),
                       Expanded(
                         child: Container(
-                          padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Column(
-                            children: [
-                              if (_selectedTab == 0)
-                                _searchBar("Search a receiving..."),
-                              const SizedBox(height: 16),
-                              Expanded(child: _buildList(isTableCompact)),
-                            ],
+                          child: BlocBuilder<OperationsBloc, OperationsState>(
+                            builder: (context, state) {
+                              if (state is OperationsLoading)
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              if (state is ReceivingLogsLoaded &&
+                                  _selectedTab == 0) {
+                                _currentOperation = state.logs;
+                                return _buildReceivingTable(
+                                  state.logs,
+                                  isMobile,
+                                );
+                              }
+                              if (state is StorageMovementsLoaded &&
+                                  _selectedTab == 1) {
+                                _currentMovements = state.movements;
+                                return _buildStorageTable(
+                                  state.movements,
+                                  isMobile,
+                                );
+                              }
+                              if (state is OperationsError)
+                                return Center(child: Text(state.message));
+                              return const Center(
+                                child: Text(
+                                  "No results.",
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -130,6 +165,8 @@ class _OperationsPageState extends State<OperationsPage> {
         if (_selectedTab != index) {
           setState(() {
             _selectedTab = index;
+            _selectedOperations.clear();
+            _selectedMovements.clear();
           });
           if (index == 0) {
             context.read<OperationsBloc>().add(LoadReceivingLogs());
@@ -166,311 +203,237 @@ class _OperationsPageState extends State<OperationsPage> {
     );
   }
 
-  Widget _searchBar(String hint) {
-    return TextField(
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-        prefixIcon: const Icon(Icons.search, color: Colors.grey),
-        filled: true,
-        fillColor: const Color(0xFFF8F9FB),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.grey.shade200),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.grey.shade200),
-        ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 0),
+  Widget _buildDeleteBar() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          const Spacer(),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            icon: const Icon(Icons.delete_outline),
+            label: Text(
+              _selectedTab == 0
+                  ? (_selectedCount == 1
+                        ? 'Delete 1 Receiving Log'
+                        : 'Delete $_selectedCount Receiving Logs')
+                  : (_selectedCount == 1
+                        ? 'Delete 1 Movement'
+                        : 'Delete $_selectedCount Movements'),
+            ),
+            onPressed: _onDeleteSelected,
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildList(bool isTableCompact) {
-    return BlocBuilder<OperationsBloc, OperationsState>(
-      builder: (context, state) {
-        if (state is OperationsLoading) {
-          return const Center(child: CircularProgressIndicator());
+  Widget _buildReceivingTable(List<ReceivingModel> logs, bool isMobile) {
+    final columns = [
+      const TableColumnConfig(
+        title: "Product",
+        key: "product",
+        flex: 3,
+        minWidth: 200,
+      ),
+      const TableColumnConfig(
+        title: "Barcode",
+        key: "barcode",
+        flex: 2,
+        minWidth: 150,
+      ),
+      if (!isMobile) ...[
+        const TableColumnConfig(
+          title: "Hotel",
+          key: "hotel",
+          flex: 2,
+          minWidth: 150,
+        ),
+        const TableColumnConfig(
+          title: "Expiry Date",
+          key: "expiry",
+          flex: 2,
+          minWidth: 120,
+        ),
+      ],
+      const TableColumnConfig(
+        title: "Quantity",
+        key: "quantity",
+        flex: 1,
+        minWidth: 100,
+      ),
+      const TableColumnConfig(
+        title: "Actions",
+        key: "actions",
+        flex: 1,
+        minWidth: 100,
+      ),
+    ];
+
+    return ResponsiveTable<ReceivingModel>(
+      columns: columns,
+      items: logs,
+      headerCheckboxValue: _headerCheckboxValue,
+      onHeaderCheckboxChanged: () {
+        setState(() {
+          if (_isAllSelected) {
+            _selectedOperations.clear();
+          } else {
+            _selectedOperations = logs.toSet();
+          }
+        });
+      },
+      leadingWidgetBuilder: (context, log) => Checkbox(
+        activeColor: Colors.blue,
+        value: _selectedOperations.contains(log),
+        onChanged: (checked) {
+          setState(() {
+            if (checked == true) {
+              _selectedOperations.add(log);
+            } else {
+              _selectedOperations.remove(log);
+            }
+          });
+        },
+      ),
+      cellBuilder: (context, log, key) {
+        switch (key) {
+          case 'product':
+            return Text(log.product, overflow: TextOverflow.ellipsis);
+          case 'barcode':
+            return Text(log.barcode, overflow: TextOverflow.ellipsis);
+          case 'hotel':
+            return Text(log.hotelName, overflow: TextOverflow.ellipsis);
+          case 'expiry':
+            return Text(
+              log.expiryDate != null
+                  ? DateFormat('yyyy-MM-dd').format(log.expiryDate!)
+                  : '-',
+              overflow: TextOverflow.ellipsis,
+            );
+          case 'quantity':
+            return Text(log.quantity.toString());
+          case 'actions':
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.visibility_outlined, size: 20),
+                  onPressed: () {},
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 20),
+                  onPressed: () {},
+                ),
+              ],
+            );
+          default:
+            return const SizedBox.shrink();
         }
-        if (state is ReceivingLogsLoaded && _selectedTab == 0) {
-          _currentOperation = state.logs; // Update _currentOperation here
-          return _receivingTable(state.logs, isTableCompact);
-        }
-        if (state is StorageMovementsLoaded && _selectedTab == 1) {
-          return _storageTable(state.movements, isTableCompact);
-        }
-        if (state is OperationsError) {
-          return Center(child: Text(state.message));
-        }
-        return const Center(
-          child: Text("No results.", style: TextStyle(color: Colors.grey)),
-        );
       },
     );
   }
 
-  Widget _receivingTable(List<ReceivingModel> logs, bool isTableCompact) {
-    return Column(
-      children: [
-        if (_showDeleteButton)
-          Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                icon: const Icon(Icons.delete, color: Colors.white),
-                label: Text(
-                  _selectedCount == 1
-                      ? 'Delete 1 Kitchen'
-                      : 'Delete $_selectedCount Kitchens',
-                  style: const TextStyle(color: Colors.white),
-                ),
-                onPressed: _onDeleteSelected,
-              ),
-            ),
-          ),
-        _receivingTableHeader(isTableCompact),
-        if (logs.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(32.0),
-            child: Center(child: Text("No results found.")),
-          )
-        else
-          Expanded(
-            child: ListView.builder(
-              itemCount: logs.length,
-              itemBuilder: (context, index) =>
-                  _receivingTableRow(context, logs[index], isTableCompact),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _receivingTableHeader(bool isTableCompact) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: const BoxDecoration(
-        color: Color(0xFFEFF5FF),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Checkbox(
-              activeColor: Colors.blue,
-              tristate: true,
-              value: _headerCheckboxValue,
-              onChanged: (value) {
-                setState(() {
-                  if (value == true) {
-                    // select all
-                    _selectedOperations = _currentOperation.toSet();
-                  } else {
-                    // clear all
-                    _selectedOperations.clear();
-                  }
-                });
-              },
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: const Text(
-              "Barcode",
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-            ),
-          ),
-          if (!isTableCompact)
-            const Expanded(
-              flex: 3,
-              child: Text(
-                "Invoice No",
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          Expanded(
-            flex: isTableCompact ? 6 : 4,
-            child: const Text(
-              "Product",
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: const Text(
-              "Quantity",
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: const Text(
-              "Expiry Date",
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-            ),
-          ),
-          if (!isTableCompact)
-            const Expanded(
-              flex: 3,
-              child: Text(
-                "Production Date",
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          const Expanded(
-            flex: 3,
-            child: Text(
-              "Hotel",
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-            ),
-          ),
-          if (!isTableCompact)
-            const Expanded(
-              flex: 3,
-              child: Text(
-                "Received By",
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          Expanded(
-            flex: 3,
-            child: const Text(
-              "Actions",
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _receivingTableRow(
-    BuildContext context,
-    ReceivingModel log,
-    bool isTableCompact,
+  Widget _buildStorageTable(
+    List<KitchenStorageModel> movements,
+    bool isMobile,
   ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          left: BorderSide(color: Colors.grey.shade300),
-          right: BorderSide(color: Colors.grey.shade300),
-          bottom: BorderSide(color: Colors.grey.shade200),
+    final columns = [
+      if (!isMobile)
+        const TableColumnConfig(
+          title: "Date",
+          key: "date",
+          flex: 2,
+          minWidth: 150,
         ),
+      const TableColumnConfig(
+        title: "Product",
+        key: "product",
+        flex: 3,
+        minWidth: 200,
       ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Checkbox(
-              activeColor: Colors.blue,
-              value: _selectedOperations.contains(log),
-              onChanged: (value) {
-                setState(() {
-                  if (value == true) {
-                    _selectedOperations.add(log);
-                  } else {
-                    _selectedOperations.remove(log);
-                  }
-                });
-              },
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(log.barcode, style: const TextStyle(fontSize: 13)),
-          ),
-          if (!isTableCompact)
-            Expanded(
-              flex: 3,
-              child: Text(log.invoiceNo, style: const TextStyle(fontSize: 13)),
-            ),
-          Expanded(
-            flex: isTableCompact ? 6 : 4,
-            child: Text(log.product, style: const TextStyle(fontSize: 13)),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              log.quantity.toString(),
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              log.expiryDate != null
-                  ? DateFormat('yyyy-MM-dd').format(log.expiryDate!)
-                  : '-',
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-          if (!isTableCompact)
-            Expanded(
-              flex: 3,
-              child: Text(
-                log.productionDate != null
-                    ? DateFormat('yyyy-MM-dd').format(log.productionDate!)
-                    : '-',
-                style: const TextStyle(fontSize: 13),
-              ),
-            ),
-          Expanded(
-            flex: 3,
-            child: Text(log.hotelName, style: const TextStyle(fontSize: 13)),
-          ),
-          if (!isTableCompact)
-            Expanded(
-              flex: 3,
-              child: Text(log.receivedBy, style: const TextStyle(fontSize: 13)),
-            ),
-          Expanded(
-            flex: 3,
-            child: Row(
+      const TableColumnConfig(
+        title: "From",
+        key: "from",
+        flex: 2,
+        minWidth: 150,
+      ),
+      const TableColumnConfig(title: "To", key: "to", flex: 2, minWidth: 150),
+      const TableColumnConfig(title: "Qty", key: "qty", flex: 1, minWidth: 80),
+      const TableColumnConfig(
+        title: "Actions",
+        key: "actions",
+        flex: 1,
+        minWidth: 100,
+      ),
+    ];
+
+    return ResponsiveTable<KitchenStorageModel>(
+      columns: columns,
+      items: movements,
+      headerCheckboxValue: _headerCheckboxValue,
+      onHeaderCheckboxChanged: () {
+        setState(() {
+          if (_isAllSelected) {
+            _selectedMovements.clear();
+          } else {
+            _selectedMovements = movements.toSet();
+          }
+        });
+      },
+      leadingWidgetBuilder: (context, movement) => Checkbox(
+        activeColor: Colors.blue,
+        value: _selectedMovements.contains(movement),
+        onChanged: (checked) {
+          setState(() {
+            if (checked == true) {
+              _selectedMovements.add(movement);
+            } else {
+              _selectedMovements.remove(movement);
+            }
+          });
+        },
+      ),
+      cellBuilder: (context, movement, key) {
+        switch (key) {
+          case 'date':
+            return Text(
+              DateFormat('yyyy-MM-dd HH:mm').format(movement.date),
+              overflow: TextOverflow.ellipsis,
+            );
+          case 'product':
+            return Text(movement.product, overflow: TextOverflow.ellipsis);
+          case 'from':
+            return Text(movement.kitchenName, overflow: TextOverflow.ellipsis);
+          case 'to':
+            return Text(movement.storageName, overflow: TextOverflow.ellipsis);
+          case 'qty':
+            return Text(movement.quantity.toString());
+          case 'actions':
+            return Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  splashRadius: 20,
-                  icon: const Icon(Icons.visibility_outlined, size: 18),
+                  icon: const Icon(Icons.visibility_outlined, size: 20),
                   onPressed: () {},
                 ),
-                const SizedBox(width: 8),
                 IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  splashRadius: 20,
-                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  icon: const Icon(Icons.edit_outlined, size: 20),
                   onPressed: () {},
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
+            );
+          default:
+            return const SizedBox.shrink();
+        }
+      },
     );
   }
 
@@ -480,9 +443,13 @@ class _OperationsPageState extends State<OperationsPage> {
       builder: (context) => AlertDialog(
         title: const Text('Confirm Delete'),
         content: Text(
-          _selectedCount == 1
-              ? 'Are you sure you want to delete this Operation?'
-              : 'Are you sure you want to delete $_selectedCount Operations?',
+          _selectedTab == 0
+              ? (_selectedCount == 1
+                    ? 'Are you sure you want to delete this receiving log?'
+                    : 'Are you sure you want to delete $_selectedCount receiving logs?')
+              : (_selectedCount == 1
+                    ? 'Are you sure you want to delete this movement?'
+                    : 'Are you sure you want to delete $_selectedCount movements?'),
         ),
         actions: [
           TextButton(
@@ -492,179 +459,19 @@ class _OperationsPageState extends State<OperationsPage> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
-              // 🔥 dispatch delete event
-              context.read<OperationsBloc>().add(
-                DeleteOperations(_selectedOperations.toList()),
-              );
-
-              setState(() {
-                _selectedOperations.clear();
-              });
-
+              if (_selectedTab == 0) {
+                context.read<OperationsBloc>().add(
+                  DeleteOperations(_selectedOperations.toList()),
+                );
+                setState(() => _selectedOperations.clear());
+              } else {
+                // Adjust depending on whether your BLoC supports movement deletion
+                // context.read<OperationsBloc>().add(DeleteMovements(_selectedMovements.toList()));
+                setState(() => _selectedMovements.clear());
+              }
               Navigator.pop(context);
             },
             child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _storageTable(
-    List<KitchenStorageModel> movements,
-    bool isTableCompact,
-  ) {
-    return Column(
-      children: [
-        _storageTableHeader(isTableCompact),
-        if (movements.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(32.0),
-            child: Center(child: Text("No results found.")),
-          )
-        else
-          Expanded(
-            child: ListView.builder(
-              itemCount: movements.length,
-              itemBuilder: (context, index) =>
-                  _storageTableRow(context, movements[index], isTableCompact),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _storageTableHeader(bool isTableCompact) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: const BoxDecoration(
-        color: Color(0xFFEFF5FF),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: isTableCompact ? 3 : 2,
-            child: const Text(
-              "Date",
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(
-            flex: isTableCompact ? 6 : 3,
-            child: const Text(
-              "Product",
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const Expanded(
-            flex: 3,
-            child: Text(
-              "Barcode",
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-            ),
-          ),
-
-          Expanded(
-            flex: isTableCompact ? 2 : 1,
-            child: const Text(
-              "Qty",
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const Expanded(
-            flex: 2,
-            child: Text(
-              "Hotel",
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const Expanded(
-            flex: 2,
-            child: Text(
-              "Kitchen",
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const Expanded(
-            flex: 2,
-            child: Text(
-              "Storage",
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const Expanded(
-            flex: 2,
-            child: Text(
-              "Moved By",
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _storageTableRow(
-    BuildContext context,
-    KitchenStorageModel m,
-    bool isTableCompact,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          left: BorderSide(color: Colors.grey.shade300),
-          right: BorderSide(color: Colors.grey.shade300),
-          bottom: BorderSide(color: Colors.grey.shade200),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: isTableCompact ? 3 : 2,
-            child: Text(
-              DateFormat('yyyy-MM-dd HH:mm').format(m.date),
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-          Expanded(
-            flex: isTableCompact ? 6 : 3,
-            child: Text(m.product, style: const TextStyle(fontSize: 13)),
-          ),
-
-          Expanded(
-            flex: 3,
-            child: Text(m.barcode, style: const TextStyle(fontSize: 13)),
-          ),
-
-          Expanded(
-            flex: isTableCompact ? 2 : 1,
-            child: Text(
-              m.quantity.toString(),
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-
-          Expanded(
-            flex: 2,
-            child: Text(m.hotelName, style: const TextStyle(fontSize: 13)),
-          ),
-
-          Expanded(
-            flex: 2,
-            child: Text(m.kitchenName, style: const TextStyle(fontSize: 13)),
-          ),
-
-          Expanded(
-            flex: 2,
-            child: Text(m.storageName, style: const TextStyle(fontSize: 13)),
-          ),
-
-          Expanded(
-            flex: 2,
-            child: Text(m.movedBy, style: const TextStyle(fontSize: 13)),
           ),
         ],
       ),

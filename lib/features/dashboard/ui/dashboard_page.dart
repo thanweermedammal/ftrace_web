@@ -23,11 +23,12 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final isMobile = width < 900;
+    final isMobileNav = width < 900;
+    final isMobile = width < 600;
 
     return Column(
       children: [
-        if (isMobile)
+        if (isMobileNav)
           AppBar(
             backgroundColor: Colors.white,
             elevation: 0.5,
@@ -46,7 +47,7 @@ class _DashboardPageState extends State<DashboardPage> {
           const TopBar(title: "Dashboard"),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(isMobile ? 12 : 24),
             child: BlocBuilder<DashboardBloc, DashboardState>(
               builder: (context, state) {
                 if (state is DashboardLoading) {

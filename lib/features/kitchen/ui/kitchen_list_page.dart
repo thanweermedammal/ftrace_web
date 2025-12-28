@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ftrace_web/core/theme.dart';
 import '../bloc/kitchen_bloc.dart';
 import '../bloc/kitchen_event.dart';
 import '../bloc/kitchen_state.dart';
@@ -9,6 +8,7 @@ import 'package:ftrace_web/features/auth/bloc/auth_bloc.dart';
 import 'package:ftrace_web/features/auth/bloc/auth_state.dart';
 import 'package:ftrace_web/features/users/model/users_model.dart';
 import 'package:ftrace_web/core/widgets/top_bar.dart';
+import 'package:ftrace_web/core/widgets/responsive_table.dart';
 import 'package:go_router/go_router.dart';
 
 class KitchenListPage extends StatefulWidget {
@@ -29,12 +29,13 @@ class _KitchenListPageState extends State<KitchenListPage> {
   List<String> _selectedStorageFilters = [];
 
   Set<KitchenModel> _selectedKitchens = {};
-  late List<KitchenModel> _filteredKitchens; // Filtered list for display
+  List<KitchenModel>? _currentFilteredKitchens; // Filtered list for display
 
   // Derived Selection Properties
   bool get _isAllSelected =>
-      _filteredKitchens.isNotEmpty &&
-      _selectedKitchens.length == _filteredKitchens.length;
+      _currentFilteredKitchens != null &&
+      _currentFilteredKitchens!.isNotEmpty &&
+      _selectedKitchens.length == _currentFilteredKitchens!.length;
 
   bool get _isNoneSelected => _selectedKitchens.isEmpty;
   int get _selectedCount => _selectedKitchens.length;
@@ -71,11 +72,12 @@ class _KitchenListPageState extends State<KitchenListPage> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final isMobile = width < 900;
+    final isMobileNav = width < 900;
+    final isMobile = width < 600;
 
     return Column(
       children: [
-        if (isMobile)
+        if (isMobileNav)
           AppBar(
             backgroundColor: Colors.white,
             elevation: 0.5,
@@ -93,498 +95,117 @@ class _KitchenListPageState extends State<KitchenListPage> {
         else
           const TopBar(title: "Kitchens"),
         Expanded(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: BlocBuilder<KitchenBloc, KitchenState>(
-                builder: (context, state) {
-                  if (state is KitchenLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+          child: Padding(
+            padding: EdgeInsets.all(isMobile ? 12 : 24),
+            child: BlocBuilder<KitchenBloc, KitchenState>(
+              builder: (context, state) {
+                if (state is KitchenLoading &&
+                    _currentFilteredKitchens == null) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                  if (state is KitchenLoaded) {
-                    final allKitchens = state.kitchens;
+                if (state is KitchenLoaded ||
+                    _currentFilteredKitchens != null) {
+                  final allKitchens = state is KitchenLoaded
+                      ? state.kitchens
+                      : <KitchenModel>[];
 
-                    // Apply Filters
-                    _filteredKitchens = allKitchens.where((k) {
-                      // Hotel Filter
-                      if (_selectedHotelFilters.isNotEmpty &&
-                          !_selectedHotelFilters.contains(k.hotelName)) {
-                        return false;
-                      }
-
-                      // Storage Filter
-                      if (_selectedStorageFilters.isNotEmpty) {
-                        bool hasMatch = k.storages.any(
-                          (s) => _selectedStorageFilters.contains(s),
-                        );
-                        if (!hasMatch) return false;
-                      }
-
-                      return true;
-                    }).toList();
-
-                    // Sort based on status filter
-                    if (_statusFilter == 'ACTIVE') {
-                      _filteredKitchens.sort((a, b) {
-                        if (a.status.toUpperCase() == 'ACTIVE' &&
-                            b.status.toUpperCase() != 'ACTIVE') {
-                          return -1;
-                        } else if (a.status.toUpperCase() != 'ACTIVE' &&
-                            b.status.toUpperCase() == 'ACTIVE') {
-                          return 1;
-                        }
-                        return 0;
-                      });
-                    } else if (_statusFilter == 'INACTIVE') {
-                      _filteredKitchens.sort((a, b) {
-                        if (a.status.toUpperCase() == 'INACTIVE' &&
-                            b.status.toUpperCase() != 'INACTIVE') {
-                          return -1;
-                        } else if (a.status.toUpperCase() != 'INACTIVE' &&
-                            b.status.toUpperCase() == 'INACTIVE') {
-                          return 1;
-                        }
-                        return 0;
-                      });
-                    } else {
-                      // Default: Active first (Same as Hotel List)
-                      _filteredKitchens.sort((a, b) {
-                        if (a.status.toUpperCase() == 'ACTIVE' &&
-                            b.status.toUpperCase() != 'ACTIVE') {
-                          return -1;
-                        } else if (a.status.toUpperCase() != 'ACTIVE' &&
-                            b.status.toUpperCase() == 'ACTIVE') {
-                          return 1;
-                        }
-                        return 0;
-                      });
+                  final filteredKitchens = allKitchens.where((k) {
+                    // Hotel Filter
+                    if (_selectedHotelFilters.isNotEmpty &&
+                        !_selectedHotelFilters.contains(k.hotelName)) {
+                      return false;
                     }
 
-                    // Get Options for Filter Dropdowns
-                    final hotelOptions = _getUniqueHotels(allKitchens);
-                    final storageOptions = _getUniqueStorages(allKitchens);
+                    // Storage Filter
+                    if (_selectedStorageFilters.isNotEmpty) {
+                      bool hasMatch = k.storages.any(
+                        (s) => _selectedStorageFilters.contains(s),
+                      );
+                      if (!hasMatch) return false;
+                    }
 
-                    return Column(
-                      children: [
-                        // TOP BAR: Search | Add | Spacer | Hide Filters | Status Toggle
-                        isMobile
-                            ? Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  TextField(
-                                    controller: _searchController,
-                                    onChanged: (v) {
-                                      final authState = context
-                                          .read<AuthBloc>()
-                                          .state;
-                                      final user = authState is AuthSuccess
-                                          ? authState.user
-                                          : null;
-                                      context.read<KitchenBloc>().add(
-                                        LoadKitchens(
-                                          hotelId: widget.hotelId,
-                                          query: v,
-                                          currentUser: user,
-                                        ),
-                                      );
-                                    },
-                                    decoration: InputDecoration(
-                                      hintText: "Search kitchens...",
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                      prefixIcon: const Icon(
-                                        Icons.search,
-                                        color: Colors.grey,
-                                        size: 20,
-                                      ),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            vertical: 0,
-                                          ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: ElevatedButton.icon(
-                                          onPressed: () {
-                                            context.push('/kitchenform');
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.blue,
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 20,
-                                              vertical: 16,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                          ),
-                                          icon: const Icon(
-                                            Icons.add,
-                                            color: Colors.white,
-                                            size: 18,
-                                          ),
-                                          label: const Text(
-                                            "ADD KITCHEN",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: OutlinedButton.icon(
-                                          onPressed: () {
-                                            setState(() {
-                                              _showFilters = !_showFilters;
-                                            });
-                                          },
-                                          style: OutlinedButton.styleFrom(
-                                            backgroundColor: Colors.white,
-                                            side: BorderSide(
-                                              color: Colors.grey.shade300,
-                                            ),
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 16,
-                                              vertical: 16,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                          ),
-                                          icon: Icon(
-                                            _showFilters
-                                                ? Icons.filter_list_off
-                                                : Icons.filter_list,
-                                            size: 18,
-                                            color: Colors.black87,
-                                          ),
-                                          label: Text(
-                                            _showFilters
-                                                ? "HIDE FILTERS"
-                                                : "SHOW FILTERS",
-                                            style: const TextStyle(
-                                              color: Colors.black87,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  IntrinsicWidth(
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: Colors.grey.shade300,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          _statusToggleButton("Active"),
-                                          Container(
-                                            width: 1,
-                                            height: 24,
-                                            color: Colors.grey.shade300,
-                                          ),
-                                          _statusToggleButton("Inactive"),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : Row(
-                                children: [
-                                  Expanded(
-                                    flex: 3,
-                                    child: TextField(
-                                      controller: _searchController,
-                                      onChanged: (v) {
-                                        final authState = context
-                                            .read<AuthBloc>()
-                                            .state;
-                                        final user = authState is AuthSuccess
-                                            ? authState.user
-                                            : null;
-                                        context.read<KitchenBloc>().add(
-                                          LoadKitchens(
-                                            hotelId: widget.hotelId,
-                                            query: v,
-                                            currentUser: user,
-                                          ),
-                                        );
-                                      },
-                                      decoration: InputDecoration(
-                                        hintText: "Search kitchens...",
-                                        filled: true,
-                                        fillColor: Colors.white,
-                                        prefixIcon: const Icon(
-                                          Icons.search,
-                                          color: Colors.grey,
-                                          size: 20,
-                                        ),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                          borderSide: BorderSide.none,
-                                        ),
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                              vertical: 0,
-                                            ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  ElevatedButton.icon(
-                                    onPressed: () {
-                                      context.push('/kitchenform');
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.blue,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 20,
-                                        vertical: 16,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    icon: const Icon(
-                                      Icons.add,
-                                      color: Colors.white,
-                                      size: 18,
-                                    ),
-                                    label: const Text(
-                                      "ADD KITCHEN",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  // Show/Hide Filters Button
-                                  OutlinedButton.icon(
-                                    onPressed: () {
-                                      setState(() {
-                                        _showFilters = !_showFilters;
-                                      });
-                                    },
-                                    style: OutlinedButton.styleFrom(
-                                      backgroundColor: Colors.white,
-                                      side: BorderSide(
-                                        color: Colors.grey.shade300,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 16,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    icon: Icon(
-                                      _showFilters
-                                          ? Icons.filter_list_off
-                                          : Icons.filter_list,
-                                      size: 18,
-                                      color: Colors.black87,
-                                    ),
-                                    label: Text(
-                                      _showFilters
-                                          ? "HIDE FILTERS"
-                                          : "SHOW FILTERS",
-                                      style: const TextStyle(
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  // Active/Inactive Toggle
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: Colors.grey.shade300,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        _statusToggleButton("Active"),
-                                        Container(
-                                          width: 1,
-                                          height: 24,
-                                          color: Colors.grey.shade300,
-                                        ),
-                                        _statusToggleButton("Inactive"),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
+                    return true;
+                  }).toList();
 
-                        // FILTER SECTION (Collapsible)
-                        if (_showFilters)
-                          Container(
-                            margin: const EdgeInsets.only(top: 16),
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              // border: Border.all(color: Colors.grey.shade200),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      child: _buildMultiSelectDropdown(
-                                        title: "Hotel",
-                                        options: hotelOptions,
-                                        selectedValues: _selectedHotelFilters,
-                                        onChanged: (values) {
-                                          setState(() {
-                                            _selectedHotelFilters = values;
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(width: 24),
-                                    Expanded(
-                                      child: _buildMultiSelectDropdown(
-                                        title: "Storage",
-                                        options: storageOptions,
-                                        selectedValues: _selectedStorageFilters,
-                                        onChanged: (values) {
-                                          setState(() {
-                                            _selectedStorageFilters = values;
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                OutlinedButton.icon(
-                                  onPressed: () {
-                                    setState(() {
-                                      _selectedHotelFilters.clear();
-                                      _selectedStorageFilters.clear();
-                                      _statusFilter =
-                                          'ACTIVE'; // Reset status too? Or just filters? Usually filters.
-                                    });
-                                  },
-                                  icon: const Icon(
-                                    Icons.close,
-                                    size: 16,
-                                    color: Colors.black87,
-                                  ),
-                                  label: const Text(
-                                    "CLEAR FILTERS",
-                                    style: TextStyle(color: Colors.black87),
-                                  ),
-                                  style: OutlinedButton.styleFrom(
-                                    side: BorderSide(
-                                      color: Colors.grey.shade300,
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                  // Sort based on status filter
+                  if (_statusFilter == 'ACTIVE') {
+                    filteredKitchens.sort((a, b) {
+                      if (a.status.toUpperCase() == 'ACTIVE' &&
+                          b.status.toUpperCase() != 'ACTIVE') {
+                        return -1;
+                      } else if (a.status.toUpperCase() != 'ACTIVE' &&
+                          b.status.toUpperCase() == 'ACTIVE') {
+                        return 1;
+                      }
+                      return 0;
+                    });
+                  } else if (_statusFilter == 'INACTIVE') {
+                    filteredKitchens.sort((a, b) {
+                      if (a.status.toUpperCase() == 'INACTIVE' &&
+                          b.status.toUpperCase() != 'INACTIVE') {
+                        return -1;
+                      } else if (a.status.toUpperCase() != 'INACTIVE' &&
+                          b.status.toUpperCase() == 'INACTIVE') {
+                        return 1;
+                      }
+                      return 0;
+                    });
+                  } else {
+                    // Default: Active first (Same as Hotel List)
+                    filteredKitchens.sort((a, b) {
+                      if (a.status.toUpperCase() == 'ACTIVE' &&
+                          b.status.toUpperCase() != 'ACTIVE') {
+                        return -1;
+                      } else if (a.status.toUpperCase() != 'ACTIVE' &&
+                          b.status.toUpperCase() == 'ACTIVE') {
+                        return 1;
+                      }
+                      return 0;
+                    });
+                  }
 
-                        const SizedBox(height: 20),
+                  _currentFilteredKitchens = filteredKitchens;
 
-                        // DELETE BUTTON ROW
-                        if (_showDeleteButton)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Row(
-                              children: [
-                                const Spacer(),
-                                ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red.shade600,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 12,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  icon: const Icon(Icons.delete_outline),
-                                  label: Text(
-                                    _selectedCount == 1
-                                        ? 'Delete 1 Kitchen'
-                                        : 'Delete $_selectedCount Kitchens',
-                                  ),
-                                  onPressed: _onDeleteSelected,
-                                ),
-                              ],
-                            ),
-                          ),
+                  // Get Options for Filter Dropdowns
+                  final hotelOptions = _getUniqueHotels(allKitchens);
+                  final storageOptions = _getUniqueStorages(allKitchens);
 
-                        // TABLE
-                        Card(
-                          elevation: 0,
-                          margin: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            children: [
-                              _tableHeader(),
-                              if (_filteredKitchens.isEmpty)
-                                const Center(
-                                  child: Padding(
-                                    padding: EdgeInsets.all(24.0),
-                                    child: Text('No kitchens found'),
-                                  ),
-                                )
-                              else
-                                ..._filteredKitchens.map(
-                                  (k) => _tableRow(context, k),
-                                ),
-                            ],
-                          ),
+                  return Column(
+                    children: [
+                      // TOP BAR: Search | Add | Spacer | Hide Filters | Status Toggle
+                      _buildTopActionBar(
+                        context,
+                        isMobile,
+                        hotelOptions,
+                        storageOptions,
+                      ),
+
+                      // FILTER SECTION (Collapsible)
+                      if (_showFilters)
+                        _buildFiltersSection(
+                          isMobile,
+                          hotelOptions,
+                          storageOptions,
                         ),
-                      ],
-                    );
-                  }
 
-                  if (state is KitchenError) {
-                    return Center(child: Text(state.message));
-                  }
+                      const SizedBox(height: 20),
 
-                  return const SizedBox();
-                },
-              ),
+                      // DELETE BUTTON ROW
+                      if (_showDeleteButton) _buildDeleteBar(),
+
+                      // TABLE
+                      _buildTable(filteredKitchens, isMobile),
+                    ],
+                  );
+                }
+
+                if (state is KitchenError) {
+                  return Center(child: Text(state.message));
+                }
+
+                return const SizedBox();
+              },
             ),
           ),
         ),
@@ -593,6 +214,375 @@ class _KitchenListPageState extends State<KitchenListPage> {
   }
 
   // ---------- WIDGETS ----------
+
+  Widget _buildTopActionBar(
+    BuildContext context,
+    bool isMobile,
+    List<String> hotelOptions,
+    List<String> storageOptions,
+  ) {
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(child: _buildSearchField(context)),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: () {
+                  context.push('/kitchenform');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                icon: const Icon(Icons.add, color: Colors.white, size: 18),
+                label: const Text(
+                  "ADD KITCHEN",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(flex: 3, child: _buildSearchField(context)),
+        const SizedBox(width: 12),
+        ElevatedButton.icon(
+          onPressed: () {
+            context.push('/kitchenform');
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          icon: const Icon(Icons.add, color: Colors.white, size: 18),
+          label: const Text(
+            "ADD KITCHEN",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+        ),
+        const Spacer(),
+        // Show/Hide Filters Button
+        OutlinedButton.icon(
+          onPressed: () {
+            setState(() {
+              _showFilters = !_showFilters;
+            });
+          },
+          style: OutlinedButton.styleFrom(
+            backgroundColor: Colors.white,
+            side: BorderSide(color: Colors.grey.shade300),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          icon: Icon(
+            _showFilters ? Icons.filter_list_off : Icons.filter_list,
+            size: 18,
+            color: Colors.black87,
+          ),
+          label: Text(
+            _showFilters ? "HIDE FILTERS" : "SHOW FILTERS",
+            style: const TextStyle(color: Colors.black87),
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Active/Inactive Toggle
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Row(
+            children: [
+              _statusToggleButton("Active"),
+              Container(width: 1, height: 24, color: Colors.grey.shade300),
+              _statusToggleButton("Inactive"),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchField(BuildContext context) {
+    return TextField(
+      controller: _searchController,
+      onChanged: (v) {
+        final authState = context.read<AuthBloc>().state;
+        final user = authState is AuthSuccess ? authState.user : null;
+        context.read<KitchenBloc>().add(
+          LoadKitchens(hotelId: widget.hotelId, query: v, currentUser: user),
+        );
+      },
+      decoration: InputDecoration(
+        hintText: "Search kitchens...",
+        filled: true,
+        fillColor: Colors.white,
+        prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 20),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 0),
+      ),
+    );
+  }
+
+  Widget _buildFiltersSection(
+    bool isMobile,
+    List<String> hotelOptions,
+    List<String> storageOptions,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        // border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _buildMultiSelectDropdown(
+                  title: "Hotel",
+                  options: hotelOptions,
+                  selectedValues: _selectedHotelFilters,
+                  onChanged: (values) {
+                    setState(() {
+                      _selectedHotelFilters = values;
+                    });
+                  },
+                ),
+              ),
+              SizedBox(width: isMobile ? 12 : 24),
+              Expanded(
+                child: _buildMultiSelectDropdown(
+                  title: "Storage",
+                  options: storageOptions,
+                  selectedValues: _selectedStorageFilters,
+                  onChanged: (values) {
+                    setState(() {
+                      _selectedStorageFilters = values;
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () {
+              setState(() {
+                _selectedHotelFilters.clear();
+                _selectedStorageFilters.clear();
+                _statusFilter =
+                    'ALL'; // Reset status too? Or just filters? Usually filters.
+              });
+            },
+            icon: const Icon(Icons.close, size: 16, color: Colors.black87),
+            label: const Text(
+              "CLEAR FILTERS",
+              style: TextStyle(color: Colors.black87),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: Colors.grey.shade300),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeleteBar() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          const Spacer(),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            icon: const Icon(Icons.delete_outline),
+            label: Text(
+              _selectedCount == 1
+                  ? 'Delete 1 Kitchen'
+                  : 'Delete $_selectedCount Kitchens',
+            ),
+            onPressed: _onDeleteSelected,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTable(List<KitchenModel> kitchens, bool isMobile) {
+    final columns = [
+      const TableColumnConfig(
+        title: "Kitchen Name",
+        key: "name",
+        flex: 3,
+        minWidth: 200,
+      ),
+      const TableColumnConfig(
+        title: "Hotel",
+        key: "hotel",
+        flex: 3,
+        minWidth: 200,
+      ),
+      if (!isMobile) ...[
+        const TableColumnConfig(
+          title: "Storages",
+          key: "storages",
+          flex: 4,
+          minWidth: 250,
+        ),
+        const TableColumnConfig(
+          title: "Status",
+          key: "status",
+          flex: 1,
+          minWidth: 100,
+        ),
+      ],
+      const TableColumnConfig(
+        title: "Actions",
+        key: "actions",
+        flex: 1,
+        minWidth: 100,
+      ),
+    ];
+
+    return Expanded(
+      child: ResponsiveTable<KitchenModel>(
+        columns: columns,
+        items: kitchens,
+        headerCheckboxValue: _headerCheckboxValue,
+        onHeaderCheckboxChanged: () {
+          setState(() {
+            if (_isAllSelected) {
+              _selectedKitchens.clear();
+            } else {
+              _selectedKitchens = kitchens.toSet();
+            }
+          });
+        },
+        leadingWidgetBuilder: (context, k) => Checkbox(
+          activeColor: Colors.blue,
+          value: _selectedKitchens.contains(k),
+          onChanged: (checked) {
+            setState(() {
+              if (checked == true) {
+                _selectedKitchens.add(k);
+              } else {
+                _selectedKitchens.remove(k);
+              }
+            });
+          },
+        ),
+        cellBuilder: (context, k, key) {
+          switch (key) {
+            case 'name':
+              return Text(
+                k.name,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+                overflow: TextOverflow.ellipsis,
+              );
+            case 'hotel':
+              return Text(k.hotelName, overflow: TextOverflow.ellipsis);
+            case 'storages':
+              if (k.storages.isEmpty) return const Text("-");
+              return Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: k.storages
+                    .take(3)
+                    .map(
+                      (s) => Chip(
+                        label: Text(s, style: const TextStyle(fontSize: 10)),
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                        backgroundColor: Colors.grey.shade100,
+                      ),
+                    )
+                    .toList(),
+              );
+            case 'status':
+              final isActive = k.status.toUpperCase() == 'ACTIVE';
+              return Chip(
+                label: Text(
+                  k.status.toUpperCase(),
+                  style: TextStyle(
+                    color: isActive ? Colors.green : Colors.red.shade700,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 10,
+                  ),
+                ),
+                backgroundColor: isActive
+                    ? Colors.green.shade100
+                    : Colors.red.shade100,
+                visualDensity: VisualDensity.compact,
+              );
+            case 'actions':
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.visibility_outlined, size: 18),
+                    padding: const EdgeInsets.all(4),
+                    constraints: const BoxConstraints(),
+                    splashRadius: 20,
+                    onPressed: () => context.push('/kitchendetail', extra: k),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    padding: const EdgeInsets.all(4),
+                    constraints: const BoxConstraints(),
+                    splashRadius: 20,
+                    onPressed: () => context.push('/kitchenform', extra: k),
+                  ),
+                ],
+              );
+            default:
+              return const SizedBox.shrink();
+          }
+        },
+      ),
+    );
+  }
 
   Widget _statusToggleButton(String label) {
     bool isSelected = _statusFilter.toUpperCase() == label.toUpperCase();
@@ -745,45 +735,6 @@ class _KitchenListPageState extends State<KitchenListPage> {
     );
   }
 
-  Widget _tableHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: const BoxDecoration(
-        color: Color(0xFFEFF5FF),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 5,
-            child: Checkbox(
-              activeColor: Colors.blue,
-              tristate: true,
-              value: _headerCheckboxValue,
-              onChanged: (value) {
-                setState(() {
-                  if (value == true) {
-                    _selectedKitchens = _filteredKitchens.toSet();
-                  } else {
-                    _selectedKitchens.clear();
-                  }
-                });
-              },
-            ),
-          ),
-          Expanded(
-            flex: 25,
-            child: Text("Kitchen Name", style: primaryTextStyle),
-          ),
-          Expanded(flex: 25, child: Text("Hotel", style: primaryTextStyle)),
-          Expanded(flex: 40, child: Text("Storages", style: primaryTextStyle)),
-          Expanded(flex: 15, child: Text("Status", style: primaryTextStyle)),
-          Expanded(flex: 15, child: Text("Actions", style: primaryTextStyle)),
-        ],
-      ),
-    );
-  }
-
   void _onDeleteSelected() {
     showDialog(
       context: context,
@@ -813,122 +764,6 @@ class _KitchenListPageState extends State<KitchenListPage> {
               Navigator.pop(context);
             },
             child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _tableRow(BuildContext context, KitchenModel kitchen) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          left: BorderSide(color: Colors.grey.shade300),
-          right: BorderSide(color: Colors.grey.shade300),
-          bottom: BorderSide(color: Colors.grey.shade200),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            flex: 5,
-            child: Checkbox(
-              activeColor: Colors.blue,
-              value: _selectedKitchens.contains(kitchen),
-              onChanged: (checked) {
-                setState(() {
-                  if (checked == true) {
-                    _selectedKitchens.add(kitchen);
-                  } else {
-                    _selectedKitchens.remove(kitchen);
-                  }
-                });
-              },
-            ),
-          ),
-          Expanded(
-            flex: 25,
-            child: Text(
-              kitchen.name,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-          Expanded(
-            flex: 25,
-            child: Text(
-              kitchen.hotelName,
-              style: const TextStyle(color: Colors.black54),
-            ),
-          ),
-          Expanded(
-            flex: 40,
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: kitchen.storages
-                  .take(3)
-                  .map(
-                    (k) => Chip(
-                      label: Text(k),
-                      visualDensity: VisualDensity.compact,
-                      padding: EdgeInsets.zero,
-                      labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-                      backgroundColor: Colors.grey.shade100,
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-          Expanded(
-            flex: 15,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Chip(
-                label: Text(
-                  kitchen.status.toUpperCase(),
-                  style: TextStyle(
-                    color: kitchen.status.toUpperCase() == 'ACTIVE'
-                        ? Colors.green
-                        : Colors.red.shade700,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                backgroundColor: kitchen.status.toUpperCase() == 'ACTIVE'
-                    ? Colors.green.shade100
-                    : Colors.red.shade100,
-                visualDensity: VisualDensity.compact,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 15,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.visibility_outlined, size: 18),
-                  padding: EdgeInsets.all(4),
-                  constraints: const BoxConstraints(),
-                  splashRadius: 20,
-                  onPressed: () {
-                    context.push('/kitchendetail', extra: kitchen);
-                  },
-                ),
-                const SizedBox(width: 4),
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  padding: EdgeInsets.all(4),
-                  constraints: const BoxConstraints(),
-                  splashRadius: 20,
-                  onPressed: () {
-                    context.push('/kitchenform', extra: kitchen);
-                  },
-                ),
-              ],
-            ),
           ),
         ],
       ),

@@ -78,7 +78,12 @@ class Sidebar extends StatelessWidget {
                     icon: Icons.dashboard_outlined,
                     title: "Dashboard",
                     selected: location == '/dashboard',
-                    onTap: () => context.go('/dashboard'),
+                    onTap: () {
+                      if (Scaffold.of(context).hasDrawer) {
+                        Navigator.pop(context);
+                      }
+                      context.go('/dashboard');
+                    },
                   ),
                   SidebarItem(
                     icon: Icons.apartment_outlined,
@@ -87,25 +92,45 @@ class Sidebar extends StatelessWidget {
                         location.startsWith('/hotels') ||
                         location == '/hotelsform' ||
                         location == '/hoteldetail',
-                    onTap: () => context.go('/hotels'),
+                    onTap: () {
+                      if (Scaffold.of(context).hasDrawer) {
+                        Navigator.pop(context);
+                      }
+                      context.go('/hotels');
+                    },
                   ),
                   SidebarItem(
                     icon: Icons.kitchen_outlined,
                     title: "Kitchens",
                     selected: location.startsWith('/kitchen'),
-                    onTap: () => context.go('/kitchen'),
+                    onTap: () {
+                      if (Scaffold.of(context).hasDrawer) {
+                        Navigator.pop(context);
+                      }
+                      context.go('/kitchen');
+                    },
                   ),
                   SidebarItem(
                     icon: Icons.people_outline,
                     title: "Users",
                     selected: location.startsWith('/users'),
-                    onTap: () => context.go('/users'),
+                    onTap: () {
+                      if (Scaffold.of(context).hasDrawer) {
+                        Navigator.pop(context);
+                      }
+                      context.go('/users');
+                    },
                   ),
                   SidebarItem(
                     icon: Icons.assignment_outlined,
                     title: "Operations",
                     selected: location.startsWith('/operations'),
-                    onTap: () => context.go('/operations'),
+                    onTap: () {
+                      if (Scaffold.of(context).hasDrawer) {
+                        Navigator.pop(context);
+                      }
+                      context.go('/operations');
+                    },
                   ),
                   SidebarItem(
                     icon: Icons.restaurant_outlined,
@@ -114,7 +139,12 @@ class Sidebar extends StatelessWidget {
                         location.startsWith('/dishes') ||
                         location == '/dishform' ||
                         location == '/dishdetail',
-                    onTap: () => context.go('/dishes'),
+                    onTap: () {
+                      if (Scaffold.of(context).hasDrawer) {
+                        Navigator.pop(context);
+                      }
+                      context.go('/dishes');
+                    },
                   ),
 
                   const SizedBox(height: 32),
@@ -134,7 +164,12 @@ class Sidebar extends StatelessWidget {
                     selected:
                         location.startsWith('/products') ||
                         location == '/productform',
-                    onTap: () => context.go('/products'),
+                    onTap: () {
+                      if (Scaffold.of(context).hasDrawer) {
+                        Navigator.pop(context);
+                      }
+                      context.go('/products');
+                    },
                   ),
                   SidebarItem(
                     icon: Icons.category_outlined,
@@ -142,7 +177,12 @@ class Sidebar extends StatelessWidget {
                     selected:
                         location.startsWith('/categories') ||
                         location == '/categoryform',
-                    onTap: () => context.go('/categories'),
+                    onTap: () {
+                      if (Scaffold.of(context).hasDrawer) {
+                        Navigator.pop(context);
+                      }
+                      context.go('/categories');
+                    },
                   ),
                   SidebarItem(
                     icon: Icons.local_shipping_outlined,
@@ -150,7 +190,12 @@ class Sidebar extends StatelessWidget {
                     selected:
                         location.startsWith('/suppliers') ||
                         location == '/supplierform',
-                    onTap: () => context.go('/suppliers'),
+                    onTap: () {
+                      if (Scaffold.of(context).hasDrawer) {
+                        Navigator.pop(context);
+                      }
+                      context.go('/suppliers');
+                    },
                   ),
                   const SizedBox(height: 20),
                 ],
