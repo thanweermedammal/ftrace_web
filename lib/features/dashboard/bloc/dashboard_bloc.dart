@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ftrace_web/features/dashboard/data/dashboard-repository.dart';
+import '../data/dashboard_repository.dart';
 import 'dashboard_event.dart';
 import 'dashboard_state.dart';
 
@@ -17,4 +17,3 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     });
   }
 }
-

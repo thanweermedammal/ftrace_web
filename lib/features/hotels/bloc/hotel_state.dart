@@ -4,6 +4,10 @@ abstract class HotelState {}
 
 class HotelLoading extends HotelState {}
 
+class HotelSaving extends HotelState {}
+
+class HotelSaved extends HotelState {}
+
 class HotelLoaded extends HotelState {
   final List<HotelModel> hotels;
   HotelLoaded(this.hotels);

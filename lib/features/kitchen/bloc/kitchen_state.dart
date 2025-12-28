@@ -14,7 +14,8 @@ class KitchenLoaded extends KitchenState {
 class KitchenSaving extends KitchenState {}
 
 class KitchenSaved extends KitchenState {}
-
+class KitchenDeleting extends KitchenState {}
+class KitchenDeleted extends KitchenState {}
 class KitchenError extends KitchenState {
   final String message;
   KitchenError(this.message);

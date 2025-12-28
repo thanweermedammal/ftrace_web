@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 class SidebarItem extends StatefulWidget {
   final IconData icon;
   final String title;
@@ -22,8 +23,6 @@ class _SidebarItemState extends State<SidebarItem> {
 
   @override
   Widget build(BuildContext context) {
-    final active = widget.selected || isHover;
-
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => isHover = true),
@@ -31,34 +30,62 @@ class _SidebarItemState extends State<SidebarItem> {
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOutCubic,
           margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(12),
+          transform: Matrix4.identity()
+            ..translate(isHover || widget.selected ? 6.0 : 0.0)
+            ..scale(isHover ? 1.02 : 1.0),
           decoration: BoxDecoration(
-            color: active ? Colors.blue.withOpacity(0.08) : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            color: widget.selected
+                ? Colors.blue.withOpacity(0.12)
+                : isHover
+                ? Colors.blue.withOpacity(0.06)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Row(
+          child: Stack(
             children: [
-              // ICON MOVE
-              AnimatedSlide(
-                duration: const Duration(milliseconds: 200),
-                offset: isHover ? const Offset(0.15, 0) : Offset.zero,
-                child: Icon(
-                  widget.icon,
-                  size: 18,
-                  color: active ? Colors.blue : Colors.grey[700],
+              // Selection Indicator Bar
+              if (widget.selected)
+                Positioned(
+                  left: 0,
+                  top: 12,
+                  bottom: 12,
+                  child: Container(
+                    width: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                widget.title,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight:
-                  widget.selected ? FontWeight.w600 : FontWeight.w400,
-                  color: active ? Colors.blue : Colors.grey[800],
+              Padding(
+                padding: EdgeInsets.only(
+                  left: widget.selected ? 20 : 16, // Adjust padding if selected
+                  right: 16,
+                  top: 12,
+                  bottom: 12,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      widget.icon,
+                      size: 20,
+                      color: widget.selected ? Colors.blue : Colors.grey[600],
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      widget.title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: widget.selected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                        color: widget.selected ? Colors.blue : Colors.grey[700],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

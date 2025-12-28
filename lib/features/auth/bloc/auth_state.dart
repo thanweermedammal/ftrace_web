@@ -1,5 +1,6 @@
-
 import 'package:equatable/equatable.dart';
+
+import 'package:ftrace_web/features/users/model/users_model.dart';
 
 abstract class AuthState extends Equatable {
   @override
@@ -7,8 +8,17 @@ abstract class AuthState extends Equatable {
 }
 
 class AuthInitial extends AuthState {}
+
 class AuthLoading extends AuthState {}
-class AuthSuccess extends AuthState {}
+
+class AuthSuccess extends AuthState {
+  final UserModel user;
+  AuthSuccess(this.user);
+
+  @override
+  List<Object?> get props => [user];
+}
+
 class AuthFailure extends AuthState {
   final String message;
   AuthFailure(this.message);

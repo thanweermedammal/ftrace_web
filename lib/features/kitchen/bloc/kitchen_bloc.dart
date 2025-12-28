@@ -14,6 +14,7 @@ class KitchenBloc extends Bloc<KitchenEvent, KitchenState> {
         repository.fetchKitchens(
           hotelId: event.hotelId,
           status: event.status,
+          currentUser: event.currentUser,
         ),
         onData: (data) => KitchenLoaded(data),
         onError: (e, _) => KitchenError(e.toString()),
@@ -25,11 +26,30 @@ class KitchenBloc extends Bloc<KitchenEvent, KitchenState> {
       try {
         await repository.addKitchen(
           hotelId: event.hotelId,
+          hotelName: event.hotelName,
           name: event.name,
           status: event.status,
           storages: event.storages,
         );
         emit(KitchenSaved());
+      } catch (e) {
+        emit(KitchenError(e.toString()));
+      }
+    });
+
+    on<UpdateKitchen>((event, emit) async {
+      emit(KitchenSaving());
+      try {
+        await repository.updateKitchen(kitchen: event.kitchen);
+        emit(KitchenSaved());
+      } catch (e) {
+        emit(KitchenError(e.toString()));
+      }
+    });
+
+    on<DeleteKitchens>((event, emit) async {
+      try {
+        await repository.deleteKitchensAcrossHotels(event.kitchens);
       } catch (e) {
         emit(KitchenError(e.toString()));
       }

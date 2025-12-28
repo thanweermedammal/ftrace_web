@@ -10,6 +10,11 @@ class LoginRequested extends AuthEvent {
   final String password;
 
   LoginRequested(this.email, this.password);
+
+  @override
+  List<Object?> get props => [email, password];
 }
+
+class AuthCheckRequested extends AuthEvent {}
 
 class LogoutRequested extends AuthEvent {}
