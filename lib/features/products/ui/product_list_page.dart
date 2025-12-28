@@ -89,86 +89,83 @@ class _ProductListPageState extends State<ProductListPage> {
     final isMobileNav = width < 900;
     final isMobile = width < 600;
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: isMobileNav
-          ? AppBar(
-              backgroundColor: Colors.white,
-              elevation: 0.5,
-              leading: Builder(
-                builder: (context) => IconButton(
-                  icon: const Icon(Icons.menu, color: Colors.black),
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                ),
-              ),
-              title: const Text(
-                "Products",
-                style: TextStyle(color: Colors.black),
-              ),
-            )
-          : null,
-      body: Column(
-        children: [
-          if (!isMobileNav) const TopBar(title: "Products"),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.all(isMobileNav ? 12.0 : 24.0),
-              child: BlocBuilder<ProductsBloc, ProductsState>(
-                builder: (context, state) {
-                  if (state is ProductsLoading && _currentProducts == null) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (state is ProductsError && _currentProducts == null) {
-                    return Center(child: Text(state.message));
-                  }
-
-                  final products = state is ProductsLoaded
-                      ? state.products
-                      : _currentProducts ?? [];
-                  if (_currentProducts != products) {
-                    _currentProducts = products;
-                  }
-                  _currentProducts = products;
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (state is ProductsLoading)
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: 8.0),
-                          child: LinearProgressIndicator(minHeight: 2),
-                        ),
-                      _buildTopActionBar(context, isMobile, isMobileNav),
-                      if (_showFilters && !isMobile) ...[
-                        const SizedBox(height: 20),
-                        ProductFilterBar(
-                          selectedSupplier: _selectedSupplier,
-                          selectedUom: _selectedUom,
-                          selectedInventoryUom: _selectedInventoryUom,
-                          selectedCategory: _selectedCategory,
-                          onChanged: (supplier, uom, invUom, cat) {
-                            setState(() {
-                              _selectedSupplier = supplier;
-                              _selectedUom = uom;
-                              _selectedInventoryUom = invUom;
-                              _selectedCategory = cat;
-                            });
-                            _onFilterChanged();
-                          },
-                          onClear: _clearFilters,
-                        ),
-                      ],
-                      const SizedBox(height: 20),
-                      if (_showDeleteButton) _buildDeleteBar(context),
-                      Expanded(child: _buildTableContainer(products, isMobile)),
-                    ],
-                  );
-                },
+    return Column(
+      children: [
+        if (isMobileNav)
+          AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0.5,
+            leading: Builder(
+              builder: (context) => IconButton(
+                icon: const Icon(Icons.menu, color: Colors.black),
+                onPressed: () => Scaffold.of(context).openDrawer(),
               ),
             ),
+            title: const Text(
+              "Products",
+              style: TextStyle(color: Colors.black),
+            ),
+          )
+        else
+          const TopBar(title: "Products"),
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.all(isMobileNav ? 12.0 : 24.0),
+            child: BlocBuilder<ProductsBloc, ProductsState>(
+              builder: (context, state) {
+                if (state is ProductsLoading && _currentProducts == null) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (state is ProductsError && _currentProducts == null) {
+                  return Center(child: Text(state.message));
+                }
+
+                final products = state is ProductsLoaded
+                    ? state.products
+                    : _currentProducts ?? [];
+                if (_currentProducts != products) {
+                  _currentProducts = products;
+                }
+                _currentProducts = products;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (state is ProductsLoading)
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 8.0),
+                        child: LinearProgressIndicator(minHeight: 2),
+                      ),
+                    _buildTopActionBar(context, isMobile, isMobileNav),
+                    if (_showFilters && !isMobile) ...[
+                      const SizedBox(height: 20),
+                      ProductFilterBar(
+                        selectedSupplier: _selectedSupplier,
+                        selectedUom: _selectedUom,
+                        selectedInventoryUom: _selectedInventoryUom,
+                        selectedCategory: _selectedCategory,
+                        onChanged: (supplier, uom, invUom, cat) {
+                          setState(() {
+                            _selectedSupplier = supplier;
+                            _selectedUom = uom;
+                            _selectedInventoryUom = invUom;
+                            _selectedCategory = cat;
+                          });
+                          _onFilterChanged();
+                        },
+                        onClear: _clearFilters,
+                      ),
+                    ],
+                    const SizedBox(height: 20),
+                    if (_showDeleteButton) _buildDeleteBar(context),
+                    Expanded(child: _buildTableContainer(products, isMobile)),
+                  ],
+                );
+              },
+            ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
