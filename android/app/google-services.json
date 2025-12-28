@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "777712186190",
+    "project_id": "ftrace-a47c9",
+    "storage_bucket": "ftrace-a47c9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:777712186190:android:f807b3744101d2e71ea41f",
+        "android_client_info": {
+          "package_name": "com.ftrace.app.ftrace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOP2OVWDStK52r4gVVIu0cGUzhgvxX3c8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:777712186190:android:ef4dc0203133ce781ea41f",
+        "android_client_info": {
+          "package_name": "com.ftrace.web.ftrace_web"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOP2OVWDStK52r4gVVIu0cGUzhgvxX3c8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:777712186190:android:bad2cd192aa9ef721ea41f",
+        "android_client_info": {
+          "package_name": "com.nexariz.ftrace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOP2OVWDStK52r4gVVIu0cGUzhgvxX3c8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
