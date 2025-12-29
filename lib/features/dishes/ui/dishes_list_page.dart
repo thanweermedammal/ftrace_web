@@ -101,15 +101,15 @@ class _DishesListPageState extends State<DishesListPage> {
         ],
       );
     }
-    if (isMobileNav) {
-      return Column(
-        children: [
-          _buildSearchField(),
-          const SizedBox(height: 12),
-          Row(children: [Expanded(child: _buildAddButton())]),
-        ],
-      );
-    }
+    // if (isMobileNav) {
+    //   return Column(
+    //     children: [
+    //       _buildSearchField(),
+    //       const SizedBox(height: 12),
+    //       Row(children: [Expanded(child: _buildAddButton())]),
+    //     ],
+    //   );
+    // }
     return Row(
       children: [
         Expanded(child: _buildSearchField()),
@@ -200,44 +200,44 @@ class _DishesListPageState extends State<DishesListPage> {
   }
 
   Widget _buildTable(List<DishModel> dishes, bool isMobile) {
-    final columns = [
+    final List<TableColumnConfig<DishModel>> columns = [
       const TableColumnConfig(
         title: "Image",
         key: "image",
         flex: 0,
-        minWidth: 60,
+        // minWidth: 60,
       ),
       const TableColumnConfig(
         title: "Dish Name",
         key: "name",
         flex: 3,
-        minWidth: 200,
+        // minWidth: 200,
       ),
       const TableColumnConfig(
         title: "Allergens",
         key: "allergens",
         flex: 2,
-        minWidth: 150,
+        // minWidth: 150,
       ),
       if (!isMobile) ...[
         const TableColumnConfig(
           title: "Recipes",
           key: "recipes",
           flex: 3,
-          minWidth: 250,
+          // minWidth: 250,
         ),
         const TableColumnConfig(
           title: "Hotel",
           key: "hotel",
           flex: 2,
-          minWidth: 150,
+          // minWidth: 150,
         ),
       ],
       const TableColumnConfig(
         title: "Actions",
         key: "actions",
         flex: 1,
-        minWidth: 100,
+        // minWidth: 100,
       ),
     ];
 

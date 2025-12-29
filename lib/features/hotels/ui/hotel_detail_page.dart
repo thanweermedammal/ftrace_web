@@ -102,7 +102,7 @@ class HotelDetailPage extends StatelessWidget {
                     const SizedBox(height: 24),
 
                     // CONTENT
-                    if (width < 1000)
+                    if (isMobile)
                       Column(
                         children: [
                           _basicInfoCard(currentHotel),

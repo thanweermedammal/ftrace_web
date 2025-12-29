@@ -99,36 +99,51 @@ class DishDetailPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
 
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // LEFT COLUMN
-                          Expanded(
-                            flex: 2,
-                            child: Column(
-                              children: [
-                                _buildBasicInfoCard(currentDish),
-                                const SizedBox(height: 24),
-                                _buildPreCookedCard(context, currentDish),
-                                const SizedBox(height: 24),
-                                _buildRecipesCard(context, currentDish),
-                              ],
+                      if (isMobile)
+                        Column(
+                          children: [
+                            _buildBasicInfoCard(currentDish),
+                            const SizedBox(height: 24),
+                            _buildPreCookedCard(context, currentDish),
+                            const SizedBox(height: 24),
+                            _buildRecipesCard(context, currentDish),
+                            const SizedBox(height: 24),
+                            _buildSummaryCard(currentDish),
+                            const SizedBox(height: 24),
+                            _buildImageCard(currentDish),
+                          ],
+                        )
+                      else
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // LEFT COLUMN
+                            Expanded(
+                              flex: 2,
+                              child: Column(
+                                children: [
+                                  _buildBasicInfoCard(currentDish),
+                                  const SizedBox(height: 24),
+                                  _buildPreCookedCard(context, currentDish),
+                                  const SizedBox(height: 24),
+                                  _buildRecipesCard(context, currentDish),
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 24),
-                          // RIGHT COLUMN
-                          Expanded(
-                            flex: 1,
-                            child: Column(
-                              children: [
-                                _buildSummaryCard(currentDish),
-                                const SizedBox(height: 24),
-                                _buildImageCard(currentDish),
-                              ],
+                            const SizedBox(width: 24),
+                            // RIGHT COLUMN
+                            Expanded(
+                              flex: 1,
+                              child: Column(
+                                children: [
+                                  _buildSummaryCard(currentDish),
+                                  const SizedBox(height: 24),
+                                  _buildImageCard(currentDish),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
                     ],
                   ),
                 ),

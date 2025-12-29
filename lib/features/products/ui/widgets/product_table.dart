@@ -31,49 +31,38 @@ class ProductTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<TableColumnConfig> columns = [
-      TableColumnConfig(title: "Name", key: "name", flex: 3, minWidth: 200),
+    final List<TableColumnConfig<ProductModel>> columns = [
+      TableColumnConfig(title: "Name", key: "name", valueGetter: (p) => p.name),
       TableColumnConfig(
         title: "Barcode",
         key: "barcode",
-        flex: 2,
-        minWidth: 150,
+        valueGetter: (p) => p.barcode,
       ),
       if (!isMobile) ...[
-        TableColumnConfig(title: "UOM", key: "uom", flex: 1, minWidth: 80),
+        TableColumnConfig(title: "UOM", key: "uom", valueGetter: (p) => p.uom),
         TableColumnConfig(
           title: "Qty",
           key: "qty",
-          flex: 1,
-          minWidth: 80,
           isNumeric: true,
+          valueGetter: (p) => p.quantity.toString(),
         ),
         TableColumnConfig(
           title: "Inventory UOM",
           key: "inventoryUom",
-          flex: 2,
-          minWidth: 120,
-        ),
-        TableColumnConfig(
-          title: "Supplier",
-          key: "supplier",
-          flex: 3,
-          minWidth: 180,
+          valueGetter: (p) => p.inventoryUom,
         ),
         TableColumnConfig(
           title: "Categories",
           key: "categories",
-          flex: 3,
-          minWidth: 200,
+          valueGetter: (p) => p.categories.join(", "),
         ),
-        TableColumnConfig(title: "Hotel", key: "hotel", flex: 2, minWidth: 150),
+        TableColumnConfig(
+          title: "Hotel",
+          key: "hotel",
+          valueGetter: (p) => p.hotelName,
+        ),
       ],
-      TableColumnConfig(
-        title: "Actions",
-        key: "actions",
-        flex: 1,
-        minWidth: 100,
-      ),
+      const TableColumnConfig(title: "Actions", key: "actions", minWidth: 100),
     ];
 
     return ResponsiveTable<ProductModel>(

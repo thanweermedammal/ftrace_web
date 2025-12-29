@@ -287,164 +287,96 @@ class _ProductFormPageState extends State<ProductFormPage> {
                               maxLines: 3,
                             ),
                             const SizedBox(height: 24),
-                            if (isMobile) ...[
-                              _labelDropdown(
-                                "UOM *",
-                                "Select UOM",
-                                _uom,
-                                _uomOptions,
-                                (v) => setState(() => _uom = v!),
-                              ),
-                              const SizedBox(height: 24),
-                              _labelDropdown(
-                                "Inventory UOM *",
-                                "Select Inventory UOM",
-                                _invUom,
-                                _uomOptions,
-                                (v) => setState(() => _invUom = v!),
-                              ),
-                              const SizedBox(height: 24),
-                              _labelTextField(
-                                "Conversion Factor *",
-                                "1.0",
-                                _factor,
-                              ),
-                              const SizedBox(height: 24),
-                              _labelDropdown(
-                                "Status",
-                                "ACTIVE",
-                                _status,
-                                _statusOptions,
-                                (v) => setState(() => _status = v!),
-                              ),
-                              const SizedBox(height: 24),
-                              StreamBuilder<List<SupplierModel>>(
-                                stream: _hotelId.isNotEmpty
-                                    ? SuppliersRepository().fetchSuppliers(
-                                        _hotelId,
-                                      )
-                                    : Stream.value([]),
-                                builder: (context, snapshot) {
-                                  final suppliers =
-                                      snapshot.data
-                                          ?.map((e) => e.name)
-                                          .toList() ??
-                                      [];
-                                  return _labelDropdown(
-                                    "Supplier *",
-                                    "Select Supplier",
-                                    _supplier,
-                                    suppliers,
-                                    (v) => setState(() => _supplier = v!),
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 24),
-                              StreamBuilder<List<CategoryModel>>(
-                                stream: _hotelId.isNotEmpty
-                                    ? CategoriesRepository().fetchCategories(
-                                        _hotelId,
-                                      )
-                                    : Stream.value([]),
-                                builder: (context, snapshot) {
-                                  final categoriesList = snapshot.data ?? [];
-                                  return _categoryPickerField(
-                                    context,
-                                    categoriesList,
-                                  );
-                                },
-                              ),
-                            ] else ...[
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _labelDropdown(
-                                      "UOM *",
-                                      "Select UOM",
-                                      _uom,
-                                      _uomOptions,
-                                      (v) => setState(() => _uom = v!),
-                                    ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _labelDropdown(
+                                    "UOM *",
+                                    "Select UOM",
+                                    _uom,
+                                    _uomOptions,
+                                    (v) => setState(() => _uom = v!),
                                   ),
-                                  const SizedBox(width: 24),
-                                  Expanded(
-                                    child: _labelDropdown(
-                                      "Inventory UOM *",
-                                      "Select Inventory UOM",
-                                      _invUom,
-                                      _uomOptions,
-                                      (v) => setState(() => _invUom = v!),
-                                    ),
+                                ),
+                                const SizedBox(width: 24),
+                                Expanded(
+                                  child: _labelDropdown(
+                                    "Inventory UOM *",
+                                    "Select Inventory UOM",
+                                    _invUom,
+                                    _uomOptions,
+                                    (v) => setState(() => _invUom = v!),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 24),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _labelTextField(
-                                      "Conversion Factor *",
-                                      "1.0",
-                                      _factor,
-                                    ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _labelTextField(
+                                    "Conversion Factor *",
+                                    "1.0",
+                                    _factor,
                                   ),
-                                  const SizedBox(width: 24),
-                                  Expanded(
-                                    child: _labelDropdown(
-                                      "Status",
-                                      "ACTIVE",
-                                      _status,
-                                      _statusOptions,
-                                      (v) => setState(() => _status = v!),
-                                    ),
+                                ),
+                                const SizedBox(width: 24),
+                                Expanded(
+                                  child: _labelDropdown(
+                                    "Status",
+                                    "ACTIVE",
+                                    _status,
+                                    _statusOptions,
+                                    (v) => setState(() => _status = v!),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 24),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: StreamBuilder<List<SupplierModel>>(
-                                      stream: _hotelId.isNotEmpty
-                                          ? SuppliersRepository()
-                                                .fetchSuppliers(_hotelId)
-                                          : Stream.value([]),
-                                      builder: (context, snapshot) {
-                                        final suppliers =
-                                            snapshot.data
-                                                ?.map((e) => e.name)
-                                                .toList() ??
-                                            [];
-                                        return _labelDropdown(
-                                          "Supplier *",
-                                          "Select Supplier",
-                                          _supplier,
-                                          suppliers,
-                                          (v) => setState(() => _supplier = v!),
-                                        );
-                                      },
-                                    ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: StreamBuilder<List<SupplierModel>>(
+                                    stream: _hotelId.isNotEmpty
+                                        ? SuppliersRepository().fetchSuppliers(
+                                            _hotelId,
+                                          )
+                                        : Stream.value([]),
+                                    builder: (context, snapshot) {
+                                      final suppliers =
+                                          snapshot.data
+                                              ?.map((e) => e.name)
+                                              .toList() ??
+                                          [];
+                                      return _labelDropdown(
+                                        "Supplier *",
+                                        "Select Supplier",
+                                        _supplier,
+                                        suppliers,
+                                        (v) => setState(() => _supplier = v!),
+                                      );
+                                    },
                                   ),
-                                  const SizedBox(width: 24),
-                                  Expanded(
-                                    child: StreamBuilder<List<CategoryModel>>(
-                                      stream: _hotelId.isNotEmpty
-                                          ? CategoriesRepository()
-                                                .fetchCategories(_hotelId)
-                                          : Stream.value([]),
-                                      builder: (context, snapshot) {
-                                        final categoriesList =
-                                            snapshot.data ?? [];
-                                        return _categoryPickerField(
-                                          context,
-                                          categoriesList,
-                                        );
-                                      },
-                                    ),
+                                ),
+                                const SizedBox(width: 24),
+                                Expanded(
+                                  child: StreamBuilder<List<CategoryModel>>(
+                                    stream: _hotelId.isNotEmpty
+                                        ? CategoriesRepository()
+                                              .fetchCategories(_hotelId)
+                                        : Stream.value([]),
+                                    builder: (context, snapshot) {
+                                      final categoriesList =
+                                          snapshot.data ?? [];
+                                      return _categoryPickerField(
+                                        context,
+                                        categoriesList,
+                                      );
+                                    },
                                   ),
-                                ],
-                              ),
-                            ],
+                                ),
+                              ],
+                            ),
                           ],
                         ],
                       ),

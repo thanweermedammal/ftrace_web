@@ -333,51 +333,44 @@ class _UserListPageState extends State<UserListPage> {
 
             _currentUsers = filteredUsers;
 
-            final columns = [
-              const TableColumnConfig(
+            final List<TableColumnConfig<UserModel>> columns = [
+              TableColumnConfig(
                 title: "Name",
                 key: "name",
-                flex: 3,
-                minWidth: 200,
+                valueGetter: (u) => u.name,
               ),
               if (!isMobile)
-                const TableColumnConfig(
+                TableColumnConfig(
                   title: "Role",
                   key: "role",
-                  flex: 2,
-                  minWidth: 150,
+                  valueGetter: (u) => _getRoleLabel(u.role),
                 ),
-              const TableColumnConfig(
+              TableColumnConfig(
                 title: "Email",
                 key: "email",
-                flex: 3,
-                minWidth: 200,
+                valueGetter: (u) => u.email,
               ),
               if (isMobile)
-                const TableColumnConfig(
+                TableColumnConfig(
                   title: "Phone",
                   key: "phone",
-                  flex: 2,
-                  minWidth: 150,
+                  valueGetter: (u) => u.phone,
                 ),
               if (!isMobile) ...[
-                const TableColumnConfig(
+                TableColumnConfig(
                   title: "Hotels",
                   key: "hotels",
-                  flex: 3,
-                  minWidth: 200,
+                  valueGetter: (u) => u.hotelNames.join(", "),
                 ),
-                const TableColumnConfig(
+                TableColumnConfig(
                   title: "Status",
                   key: "status",
-                  flex: 1,
-                  minWidth: 100,
+                  valueGetter: (u) => u.status,
                 ),
               ],
               const TableColumnConfig(
                 title: "Actions",
                 key: "actions",
-                flex: 1,
                 minWidth: 100,
               ),
             ];

@@ -258,45 +258,31 @@ class _HotelListPageState extends State<HotelListPage> {
   }
 
   Widget _buildTable(List<HotelModel> hotels, bool isMobile) {
-    final columns = [
-      const TableColumnConfig(
-        title: "Name",
-        key: "name",
-        flex: 3,
-        minWidth: 200,
-      ),
-      const TableColumnConfig(
+    final List<TableColumnConfig<HotelModel>> columns = [
+      TableColumnConfig(title: "Name", key: "name", valueGetter: (h) => h.name),
+      TableColumnConfig(
         title: "Email",
         key: "email",
-        flex: 3,
-        minWidth: 200,
+        valueGetter: (h) => h.email,
       ),
-      const TableColumnConfig(
+      TableColumnConfig(
         title: "Phone",
         key: "phone",
-        flex: 2,
-        minWidth: 150,
+        valueGetter: (h) => h.phone,
       ),
       if (!isMobile) ...[
-        const TableColumnConfig(
+        TableColumnConfig(
           title: "Kitchens",
           key: "kitchens",
-          flex: 3,
-          minWidth: 180,
+          valueGetter: (h) => h.kitchens.join(", "),
         ),
-        const TableColumnConfig(
+        TableColumnConfig(
           title: "Status",
           key: "status",
-          flex: 1,
-          minWidth: 100,
+          valueGetter: (h) => h.status,
         ),
       ],
-      const TableColumnConfig(
-        title: "Actions",
-        key: "actions",
-        flex: 1,
-        minWidth: 100,
-      ),
+      const TableColumnConfig(title: "Actions", key: "actions", minWidth: 100),
     ];
 
     return Expanded(
@@ -348,9 +334,8 @@ class _HotelListPageState extends State<HotelListPage> {
                     .map(
                       (k) => Chip(
                         label: Text(k, style: const TextStyle(fontSize: 10)),
-                        visualDensity: VisualDensity.compact,
                         padding: EdgeInsets.zero,
-                        labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     )
                     .toList(),
@@ -378,19 +363,21 @@ class _HotelListPageState extends State<HotelListPage> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.visibility_outlined, size: 18),
-                    padding: const EdgeInsets.all(4),
+                    padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                     splashRadius: 20,
                     onPressed: () => context.push('/hoteldetail', extra: hotel),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   IconButton(
                     icon: const Icon(Icons.edit_outlined, size: 18),
-                    padding: const EdgeInsets.all(4),
+                    padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                     splashRadius: 20,
                     onPressed: () => context.push('/hotelsform', extra: hotel),
                   ),
+
+                  // const SizedBox(width: 12),
                 ],
               );
             default:

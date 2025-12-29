@@ -90,36 +90,52 @@ class ProductDetailPage extends StatelessWidget {
                       const SizedBox(height: 24),
 
                       // Layout
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // LEFT COLUMN
-                          Expanded(
-                            flex: 2,
-                            child: Column(
-                              children: [
-                                _buildBasicInfoCard(product),
-                                const SizedBox(height: 24),
-                                _buildUomCard(product),
-                                const SizedBox(height: 24),
-                                _buildCategoriesCard(product),
-                              ],
+                      if (isMobile)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildBasicInfoCard(product),
+                            const SizedBox(height: 24),
+                            _buildUomCard(product),
+                            const SizedBox(height: 24),
+                            _buildCategoriesCard(product),
+                            const SizedBox(height: 24),
+                            _buildSupplierCard(product),
+                            const SizedBox(height: 24),
+                            _buildTimestampsCard(product),
+                          ],
+                        )
+                      else
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // LEFT COLUMN
+                            Expanded(
+                              flex: 2,
+                              child: Column(
+                                children: [
+                                  _buildBasicInfoCard(product),
+                                  const SizedBox(height: 24),
+                                  _buildUomCard(product),
+                                  const SizedBox(height: 24),
+                                  _buildCategoriesCard(product),
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 24),
-                          // RIGHT COLUMN
-                          Expanded(
-                            flex: 1,
-                            child: Column(
-                              children: [
-                                _buildSupplierCard(product),
-                                const SizedBox(height: 24),
-                                _buildTimestampsCard(product),
-                              ],
+                            const SizedBox(width: 24),
+                            // RIGHT COLUMN
+                            Expanded(
+                              flex: 1,
+                              child: Column(
+                                children: [
+                                  _buildSupplierCard(product),
+                                  const SizedBox(height: 24),
+                                  _buildTimestampsCard(product),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
                     ],
                   ),
                 ),

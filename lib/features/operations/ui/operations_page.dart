@@ -41,10 +41,19 @@ class _OperationsPageState extends State<OperationsPage> {
 
   bool get _showDeleteButton => _selectedCount > 0;
 
+  String _searchQuery = "";
+  final TextEditingController _searchController = TextEditingController();
+
   bool? get _headerCheckboxValue {
     if (_isNoneSelected) return false;
     if (_isAllSelected) return true;
     return null;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -101,6 +110,8 @@ class _OperationsPageState extends State<OperationsPage> {
                         ],
                       ),
                       const SizedBox(height: 24),
+                      _buildSearchField(),
+                      const SizedBox(height: 24),
                       if (_showDeleteButton) _buildDeleteBar(),
                       Expanded(
                         child: Container(
@@ -116,17 +127,42 @@ class _OperationsPageState extends State<OperationsPage> {
                                 );
                               if (state is ReceivingLogsLoaded &&
                                   _selectedTab == 0) {
-                                _currentOperation = state.logs;
+                                final filteredLogs = state.logs
+                                    .where(
+                                      (log) =>
+                                          log.product.toLowerCase().contains(
+                                            _searchQuery.toLowerCase(),
+                                          ) ||
+                                          log.barcode.toLowerCase().contains(
+                                            _searchQuery.toLowerCase(),
+                                          ) ||
+                                          log.invoiceNo.toLowerCase().contains(
+                                            _searchQuery.toLowerCase(),
+                                          ),
+                                    )
+                                    .toList();
+                                _currentOperation = filteredLogs;
                                 return _buildReceivingTable(
-                                  state.logs,
+                                  filteredLogs,
                                   isMobile,
                                 );
                               }
                               if (state is StorageMovementsLoaded &&
                                   _selectedTab == 1) {
-                                _currentMovements = state.movements;
+                                final filteredMovements = state.movements
+                                    .where(
+                                      (m) =>
+                                          m.product.toLowerCase().contains(
+                                            _searchQuery.toLowerCase(),
+                                          ) ||
+                                          m.barcode.toLowerCase().contains(
+                                            _searchQuery.toLowerCase(),
+                                          ),
+                                    )
+                                    .toList();
+                                _currentMovements = filteredMovements;
                                 return _buildStorageTable(
-                                  state.movements,
+                                  filteredMovements,
                                   isMobile,
                                 );
                               }
@@ -148,6 +184,44 @@ class _OperationsPageState extends State<OperationsPage> {
               ),
             ],
           );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSearchField() {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 500),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: _selectedTab == 0
+              ? "Search a receiving..."
+              : "Search kitchen storages...",
+          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 15,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade200),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade200),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.blue, width: 1.5),
+          ),
+        ),
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+          });
         },
       ),
     );
@@ -236,45 +310,54 @@ class _OperationsPageState extends State<OperationsPage> {
   }
 
   Widget _buildReceivingTable(List<ReceivingModel> logs, bool isMobile) {
-    final columns = [
-      const TableColumnConfig(
-        title: "Product",
-        key: "product",
-        flex: 3,
-        minWidth: 200,
-      ),
-      const TableColumnConfig(
+    final List<TableColumnConfig<ReceivingModel>> columns = [
+      TableColumnConfig(
         title: "Barcode",
         key: "barcode",
-        flex: 2,
-        minWidth: 150,
+        valueGetter: (l) => l.barcode,
       ),
-      if (!isMobile) ...[
-        const TableColumnConfig(
-          title: "Hotel",
-          key: "hotel",
-          flex: 2,
-          minWidth: 150,
-        ),
-        const TableColumnConfig(
-          title: "Expiry Date",
-          key: "expiry",
-          flex: 2,
-          minWidth: 120,
-        ),
-      ],
-      const TableColumnConfig(
+      TableColumnConfig(
+        title: "Invoice No",
+        key: "invoiceNo",
+        valueGetter: (l) => l.invoiceNo,
+      ),
+      TableColumnConfig(
+        title: "Product",
+        key: "product",
+        valueGetter: (l) => l.product,
+      ),
+      TableColumnConfig(
         title: "Quantity",
         key: "quantity",
-        flex: 1,
-        minWidth: 100,
+        valueGetter: (l) => l.quantity.toString(),
       ),
-      const TableColumnConfig(
-        title: "Actions",
-        key: "actions",
-        flex: 1,
-        minWidth: 100,
-      ),
+      if (!isMobile) ...[
+        TableColumnConfig(
+          title: "Expiry Date",
+          key: "expiry",
+          valueGetter: (l) => l.expiryDate != null
+              ? DateFormat('yyyy-MM-dd').format(l.expiryDate!)
+              : '-',
+        ),
+        TableColumnConfig(
+          title: "Production Date",
+          key: "production",
+          valueGetter: (l) => l.productionDate != null
+              ? DateFormat('yyyy-MM-dd').format(l.productionDate!)
+              : '-',
+        ),
+        TableColumnConfig(
+          title: "Hotel",
+          key: "hotel",
+          valueGetter: (l) => l.hotelName,
+        ),
+        TableColumnConfig(
+          title: "Received By",
+          key: "receivedBy",
+          valueGetter: (l) => l.receivedBy,
+        ),
+      ],
+      const TableColumnConfig(title: "Actions", key: "actions", minWidth: 100),
     ];
 
     return ResponsiveTable<ReceivingModel>(
@@ -305,12 +388,14 @@ class _OperationsPageState extends State<OperationsPage> {
       ),
       cellBuilder: (context, log, key) {
         switch (key) {
-          case 'product':
-            return Text(log.product, overflow: TextOverflow.ellipsis);
           case 'barcode':
             return Text(log.barcode, overflow: TextOverflow.ellipsis);
-          case 'hotel':
-            return Text(log.hotelName, overflow: TextOverflow.ellipsis);
+          case 'invoiceNo':
+            return Text(log.invoiceNo, overflow: TextOverflow.ellipsis);
+          case 'product':
+            return Text(log.product, overflow: TextOverflow.ellipsis);
+          case 'quantity':
+            return Text(log.quantity.toString());
           case 'expiry':
             return Text(
               log.expiryDate != null
@@ -318,8 +403,17 @@ class _OperationsPageState extends State<OperationsPage> {
                   : '-',
               overflow: TextOverflow.ellipsis,
             );
-          case 'quantity':
-            return Text(log.quantity.toString());
+          case 'production':
+            return Text(
+              log.productionDate != null
+                  ? DateFormat('yyyy-MM-dd').format(log.productionDate!)
+                  : '-',
+              overflow: TextOverflow.ellipsis,
+            );
+          case 'hotel':
+            return Text(log.hotelName, overflow: TextOverflow.ellipsis);
+          case 'receivedBy':
+            return Text(log.receivedBy, overflow: TextOverflow.ellipsis);
           case 'actions':
             return Row(
               mainAxisSize: MainAxisSize.min,
@@ -345,36 +439,50 @@ class _OperationsPageState extends State<OperationsPage> {
     List<KitchenStorageModel> movements,
     bool isMobile,
   ) {
-    final columns = [
-      if (!isMobile)
-        const TableColumnConfig(
-          title: "Date",
-          key: "date",
-          flex: 2,
-          minWidth: 150,
-        ),
-      const TableColumnConfig(
+    final List<TableColumnConfig<KitchenStorageModel>> columns = [
+      TableColumnConfig(
+        title: "Date",
+        key: "date",
+        valueGetter: (m) => DateFormat('yyyy-MM-dd HH:mm').format(m.date),
+      ),
+      TableColumnConfig(
         title: "Product",
         key: "product",
-        flex: 3,
-        minWidth: 200,
+        valueGetter: (m) => m.product,
       ),
-      const TableColumnConfig(
-        title: "From",
-        key: "from",
-        flex: 2,
-        minWidth: 150,
+      TableColumnConfig(
+        title: "Barcode",
+        key: "barcode",
+        valueGetter: (m) => m.barcode,
       ),
-      const TableColumnConfig(title: "To", key: "to", flex: 2, minWidth: 150),
-      const TableColumnConfig(title: "Qty", key: "qty", flex: 1, minWidth: 80),
-      const TableColumnConfig(
-        title: "Actions",
-        key: "actions",
-        flex: 1,
-        minWidth: 100,
+      TableColumnConfig(
+        title: "Quantity",
+        key: "qty",
+        valueGetter: (m) => m.quantity.toString(),
       ),
+      if (!isMobile) ...[
+        TableColumnConfig(
+          title: "Hotel",
+          key: "hotel",
+          valueGetter: (m) => m.hotelName,
+        ),
+        TableColumnConfig(
+          title: "Kitchen",
+          key: "kitchen",
+          valueGetter: (m) => m.kitchenName,
+        ),
+        TableColumnConfig(
+          title: "Storage",
+          key: "storage",
+          valueGetter: (m) => m.storageName,
+        ),
+        TableColumnConfig(
+          title: "Moved By",
+          key: "movedBy",
+          valueGetter: (m) => m.movedBy,
+        ),
+      ],
     ];
-
     return ResponsiveTable<KitchenStorageModel>(
       columns: columns,
       items: movements,
@@ -410,26 +518,18 @@ class _OperationsPageState extends State<OperationsPage> {
             );
           case 'product':
             return Text(movement.product, overflow: TextOverflow.ellipsis);
-          case 'from':
-            return Text(movement.kitchenName, overflow: TextOverflow.ellipsis);
-          case 'to':
-            return Text(movement.storageName, overflow: TextOverflow.ellipsis);
+          case 'barcode':
+            return Text(movement.barcode, overflow: TextOverflow.ellipsis);
           case 'qty':
             return Text(movement.quantity.toString());
-          case 'actions':
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.visibility_outlined, size: 20),
-                  onPressed: () {},
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 20),
-                  onPressed: () {},
-                ),
-              ],
-            );
+          case 'hotel':
+            return Text(movement.hotelName, overflow: TextOverflow.ellipsis);
+          case 'kitchen':
+            return Text(movement.kitchenName, overflow: TextOverflow.ellipsis);
+          case 'storage':
+            return Text(movement.storageName, overflow: TextOverflow.ellipsis);
+          case 'movedBy':
+            return Text(movement.movedBy, overflow: TextOverflow.ellipsis);
           default:
             return const SizedBox.shrink();
         }

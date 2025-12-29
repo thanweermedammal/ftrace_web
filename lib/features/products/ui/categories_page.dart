@@ -102,15 +102,15 @@ class _CategoriesPageState extends State<CategoriesPage> {
         ],
       );
     }
-    if (isMobileNav) {
-      return Column(
-        children: [
-          _buildSearchField(),
-          const SizedBox(height: 12),
-          Row(children: [Expanded(child: _buildAddButton())]),
-        ],
-      );
-    }
+    // if (isMobileNav) {
+    //   return Column(
+    //     children: [
+    //       _buildSearchField(),
+    //       const SizedBox(height: 12),
+    //       Row(children: [Expanded(child: _buildAddButton())]),
+    //     ],
+    //   );
+    // }
     return Row(
       children: [
         Expanded(child: _buildSearchField()),
@@ -202,33 +202,21 @@ class _CategoriesPageState extends State<CategoriesPage> {
   }
 
   Widget _buildTable(List<CategoryModel> categories, bool isMobile) {
-    final columns = [
-      const TableColumnConfig(
-        title: "Name",
-        key: "name",
-        flex: 3,
-        minWidth: 200,
-      ),
+    final List<TableColumnConfig<CategoryModel>> columns = [
+      TableColumnConfig(title: "Name", key: "name", valueGetter: (c) => c.name),
       if (!isMobile) ...[
-        const TableColumnConfig(
+        TableColumnConfig(
           title: "Hotel",
           key: "hotel",
-          flex: 2,
-          minWidth: 150,
-        ),
-        const TableColumnConfig(
-          title: "Description",
-          key: "description",
-          flex: 4,
-          minWidth: 300,
+          valueGetter: (c) => c.hotelName,
         ),
       ],
-      const TableColumnConfig(
-        title: "Actions",
-        key: "actions",
-        flex: 1,
-        minWidth: 100,
+      TableColumnConfig(
+        title: "Description",
+        key: "description",
+        valueGetter: (c) => c.description,
       ),
+      const TableColumnConfig(title: "Actions", key: "actions", minWidth: 100),
     ];
 
     return Expanded(

@@ -449,39 +449,30 @@ class _KitchenListPageState extends State<KitchenListPage> {
   }
 
   Widget _buildTable(List<KitchenModel> kitchens, bool isMobile) {
-    final columns = [
-      const TableColumnConfig(
+    final List<TableColumnConfig<KitchenModel>> columns = [
+      TableColumnConfig(
         title: "Kitchen Name",
         key: "name",
-        flex: 3,
-        minWidth: 200,
+        valueGetter: (k) => k.name,
       ),
-      const TableColumnConfig(
+      TableColumnConfig(
         title: "Hotel",
         key: "hotel",
-        flex: 3,
-        minWidth: 200,
+        valueGetter: (k) => k.hotelName,
       ),
       if (!isMobile) ...[
-        const TableColumnConfig(
+        TableColumnConfig(
           title: "Storages",
           key: "storages",
-          flex: 4,
-          minWidth: 250,
+          valueGetter: (k) => k.storages.join(", "),
         ),
-        const TableColumnConfig(
+        TableColumnConfig(
           title: "Status",
           key: "status",
-          flex: 1,
-          minWidth: 100,
+          valueGetter: (k) => k.status,
         ),
       ],
-      const TableColumnConfig(
-        title: "Actions",
-        key: "actions",
-        flex: 1,
-        minWidth: 100,
-      ),
+      const TableColumnConfig(title: "Actions", key: "actions", minWidth: 100),
     ];
 
     return Expanded(

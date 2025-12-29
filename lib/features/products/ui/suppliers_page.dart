@@ -102,15 +102,15 @@ class _SuppliersPageState extends State<SuppliersPage> {
         ],
       );
     }
-    if (isMobileNav) {
-      return Column(
-        children: [
-          _buildSearchField(),
-          const SizedBox(height: 12),
-          Row(children: [Expanded(child: _buildAddButton())]),
-        ],
-      );
-    }
+    // if (isMobileNav) {
+    //   return Column(
+    //     children: [
+    //       _buildSearchField(),
+    //       const SizedBox(height: 12),
+    //       Row(children: [Expanded(child: _buildAddButton())]),
+    //     ],
+    //   );
+    // }
     return Row(
       children: [
         Expanded(child: _buildSearchField()),
@@ -202,45 +202,31 @@ class _SuppliersPageState extends State<SuppliersPage> {
   }
 
   Widget _buildTable(List<SupplierModel> suppliers, bool isMobile) {
-    final columns = [
-      const TableColumnConfig(
-        title: "Name",
-        key: "name",
-        flex: 3,
-        minWidth: 200,
-      ),
-      const TableColumnConfig(
+    final List<TableColumnConfig<SupplierModel>> columns = [
+      TableColumnConfig(title: "Name", key: "name", valueGetter: (s) => s.name),
+      TableColumnConfig(
         title: "Email",
         key: "email",
-        flex: 3,
-        minWidth: 200,
+        valueGetter: (s) => s.email,
       ),
-      const TableColumnConfig(
+      TableColumnConfig(
         title: "Phone",
         key: "phone",
-        flex: 2,
-        minWidth: 150,
+        valueGetter: (s) => s.phone,
       ),
-      if (!isMobile) ...[
-        const TableColumnConfig(
+      // if (!isMobile) ...[
+        TableColumnConfig(
           title: "Address",
           key: "address",
-          flex: 4,
-          minWidth: 300,
+          valueGetter: (s) => s.address,
         ),
-        const TableColumnConfig(
+        TableColumnConfig(
           title: "Hotel",
           key: "hotel",
-          flex: 2,
-          minWidth: 150,
+          valueGetter: (s) => s.hotelName,
         ),
-      ],
-      const TableColumnConfig(
-        title: "Actions",
-        key: "actions",
-        flex: 1,
-        minWidth: 100,
-      ),
+      // ],
+      const TableColumnConfig(title: "Actions", key: "actions", minWidth: 100),
     ];
 
     return Expanded(
