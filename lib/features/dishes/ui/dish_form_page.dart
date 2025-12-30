@@ -101,6 +101,13 @@ class _DishFormPageState extends State<DishFormPage> {
                             stream: HotelRepository().getHotels(),
                             builder: (context, snapshot) {
                               final hotels = snapshot.data ?? [];
+                              // Filter to ensure unique hotel IDs to prevent dropdown duplicates
+                              final uniqueHotels = <String, HotelModel>{};
+                              for (var hotel in hotels) {
+                                uniqueHotels[hotel.id] = hotel;
+                              }
+                              final hotelList = uniqueHotels.values.toList();
+
                               return Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -129,10 +136,13 @@ class _DishFormPageState extends State<DishFormPage> {
                                       child: DropdownButton<String>(
                                         isExpanded: true,
                                         hint: const Text("Select Hotel"),
-                                        value: _hotelId.isNotEmpty
+                                        value:
+                                            hotelList.any(
+                                              (h) => h.id == _hotelId,
+                                            )
                                             ? _hotelId
                                             : null,
-                                        items: hotels.map((h) {
+                                        items: hotelList.map((h) {
                                           return DropdownMenuItem(
                                             value: h.id,
                                             child: Text(h.name),
@@ -140,7 +150,7 @@ class _DishFormPageState extends State<DishFormPage> {
                                         }).toList(),
                                         onChanged: (val) {
                                           if (val != null) {
-                                            final selectedHotel = hotels
+                                            final selectedHotel = hotelList
                                                 .firstWhere((h) => h.id == val);
                                             setState(() {
                                               if (_hotelId != val) {
@@ -164,29 +174,19 @@ class _DishFormPageState extends State<DishFormPage> {
 
                           // 🔹 DATA STREAMS (Products & Dishes) dependent on Hotel
                           StreamBuilder<List<ProductModel>>(
+                            key: ValueKey('products_$_hotelId'),
                             stream: _hotelId.isNotEmpty
                                 ? ProductsRepository().fetchProducts(_hotelId)
                                 : Stream.value([]),
                             builder: (context, prodSnap) {
-                              if (prodSnap.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
                               final products = prodSnap.data ?? [];
 
                               return StreamBuilder<List<DishModel>>(
+                                key: ValueKey('dishes_$_hotelId'),
                                 stream: _hotelId.isNotEmpty
                                     ? DishesRepository().fetchDishes(_hotelId)
                                     : Stream.value([]),
                                 builder: (context, dishSnap) {
-                                  if (dishSnap.connectionState ==
-                                      ConnectionState.waiting) {
-                                    return const Center(
-                                      child: CircularProgressIndicator(),
-                                    );
-                                  }
                                   final allDishes = dishSnap.data ?? [];
                                   // Exclude current dish from pre-cooked options (recursion check)
                                   final availableDishes = widget.dish == null
@@ -400,45 +400,53 @@ class _DishFormPageState extends State<DishFormPage> {
                           const SizedBox(height: 32),
                           Row(
                             children: [
-                              OutlinedButton(
-                                onPressed: () => context.pop(),
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 48,
-                                    vertical: 20,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  side: BorderSide(color: Colors.grey.shade300),
-                                ),
-                                child: const Text(
-                                  "CANCEL",
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Builder(
-                                builder: (bCtx) => ElevatedButton(
-                                  onPressed: () => _save(bCtx),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blue,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 48,
+                              Expanded(
+                                flex: isMobile ? 1 : 0,
+                                child: OutlinedButton(
+                                  onPressed: () => context.pop(),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isMobile ? 16 : 48,
                                       vertical: 20,
                                     ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
+                                    side: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
                                   ),
-                                  child: Text(
-                                    widget.dish == null ? "SAVE" : "UPDATE",
-                                    style: const TextStyle(
-                                      color: Colors.white,
+                                  child: const Text(
+                                    "CANCEL",
+                                    style: TextStyle(
+                                      color: Colors.black,
                                       fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                flex: isMobile ? 1 : 0,
+                                child: Builder(
+                                  builder: (bCtx) => ElevatedButton(
+                                    onPressed: () => _save(bCtx),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blue,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: isMobile ? 16 : 48,
+                                        vertical: 20,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      widget.dish == null ? "SAVE" : "UPDATE",
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),

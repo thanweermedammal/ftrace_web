@@ -97,115 +97,130 @@ class _KitchenListPageState extends State<KitchenListPage> {
         Expanded(
           child: Padding(
             padding: EdgeInsets.all(isMobile ? 12 : 24),
-            child: BlocBuilder<KitchenBloc, KitchenState>(
-              builder: (context, state) {
-                if (state is KitchenLoading &&
-                    _currentFilteredKitchens == null) {
-                  return const Center(child: CircularProgressIndicator());
+            child: BlocListener<KitchenBloc, KitchenState>(
+              listener: (context, state) {
+                if (state is KitchenSaved) {
+                  final authState = context.read<AuthBloc>().state;
+                  final user = authState is AuthSuccess ? authState.user : null;
+
+                  context.read<KitchenBloc>().add(
+                    LoadKitchens(
+                      hotelId: widget.hotelId,
+                      currentUser: user,
+                    ),
+                  );
                 }
-
-                if (state is KitchenLoaded ||
-                    _currentFilteredKitchens != null) {
-                  final allKitchens = state is KitchenLoaded
-                      ? state.kitchens
-                      : <KitchenModel>[];
-
-                  final filteredKitchens = allKitchens.where((k) {
-                    // Hotel Filter
-                    if (_selectedHotelFilters.isNotEmpty &&
-                        !_selectedHotelFilters.contains(k.hotelName)) {
-                      return false;
-                    }
-
-                    // Storage Filter
-                    if (_selectedStorageFilters.isNotEmpty) {
-                      bool hasMatch = k.storages.any(
-                        (s) => _selectedStorageFilters.contains(s),
-                      );
-                      if (!hasMatch) return false;
-                    }
-
-                    return true;
-                  }).toList();
-
-                  // Sort based on status filter
-                  if (_statusFilter == 'ACTIVE') {
-                    filteredKitchens.sort((a, b) {
-                      if (a.status.toUpperCase() == 'ACTIVE' &&
-                          b.status.toUpperCase() != 'ACTIVE') {
-                        return -1;
-                      } else if (a.status.toUpperCase() != 'ACTIVE' &&
-                          b.status.toUpperCase() == 'ACTIVE') {
-                        return 1;
-                      }
-                      return 0;
-                    });
-                  } else if (_statusFilter == 'INACTIVE') {
-                    filteredKitchens.sort((a, b) {
-                      if (a.status.toUpperCase() == 'INACTIVE' &&
-                          b.status.toUpperCase() != 'INACTIVE') {
-                        return -1;
-                      } else if (a.status.toUpperCase() != 'INACTIVE' &&
-                          b.status.toUpperCase() == 'INACTIVE') {
-                        return 1;
-                      }
-                      return 0;
-                    });
-                  } else {
-                    // Default: Active first (Same as Hotel List)
-                    filteredKitchens.sort((a, b) {
-                      if (a.status.toUpperCase() == 'ACTIVE' &&
-                          b.status.toUpperCase() != 'ACTIVE') {
-                        return -1;
-                      } else if (a.status.toUpperCase() != 'ACTIVE' &&
-                          b.status.toUpperCase() == 'ACTIVE') {
-                        return 1;
-                      }
-                      return 0;
-                    });
+              },
+              child: BlocBuilder<KitchenBloc, KitchenState>(
+                builder: (context, state) {
+                  if (state is KitchenLoading &&
+                      _currentFilteredKitchens == null) {
+                    return const Center(child: CircularProgressIndicator());
                   }
-
-                  _currentFilteredKitchens = filteredKitchens;
-
-                  // Get Options for Filter Dropdowns
-                  final hotelOptions = _getUniqueHotels(allKitchens);
-                  final storageOptions = _getUniqueStorages(allKitchens);
-
-                  return Column(
-                    children: [
-                      // TOP BAR: Search | Add | Spacer | Hide Filters | Status Toggle
-                      _buildTopActionBar(
-                        context,
-                        isMobile,
-                        hotelOptions,
-                        storageOptions,
-                      ),
-
-                      // FILTER SECTION (Collapsible)
-                      if (_showFilters)
-                        _buildFiltersSection(
+              
+                  if (state is KitchenLoaded ||
+                      _currentFilteredKitchens != null) {
+                    final allKitchens = state is KitchenLoaded
+                        ? state.kitchens
+                        : <KitchenModel>[];
+              
+                    final filteredKitchens = allKitchens.where((k) {
+                      // Hotel Filter
+                      if (_selectedHotelFilters.isNotEmpty &&
+                          !_selectedHotelFilters.contains(k.hotelName)) {
+                        return false;
+                      }
+              
+                      // Storage Filter
+                      if (_selectedStorageFilters.isNotEmpty) {
+                        bool hasMatch = k.storages.any(
+                          (s) => _selectedStorageFilters.contains(s),
+                        );
+                        if (!hasMatch) return false;
+                      }
+              
+                      return true;
+                    }).toList();
+              
+                    // Sort based on status filter
+                    if (_statusFilter == 'ACTIVE') {
+                      filteredKitchens.sort((a, b) {
+                        if (a.status.toUpperCase() == 'ACTIVE' &&
+                            b.status.toUpperCase() != 'ACTIVE') {
+                          return -1;
+                        } else if (a.status.toUpperCase() != 'ACTIVE' &&
+                            b.status.toUpperCase() == 'ACTIVE') {
+                          return 1;
+                        }
+                        return 0;
+                      });
+                    } else if (_statusFilter == 'INACTIVE') {
+                      filteredKitchens.sort((a, b) {
+                        if (a.status.toUpperCase() == 'INACTIVE' &&
+                            b.status.toUpperCase() != 'INACTIVE') {
+                          return -1;
+                        } else if (a.status.toUpperCase() != 'INACTIVE' &&
+                            b.status.toUpperCase() == 'INACTIVE') {
+                          return 1;
+                        }
+                        return 0;
+                      });
+                    } else {
+                      // Default: Active first (Same as Hotel List)
+                      filteredKitchens.sort((a, b) {
+                        if (a.status.toUpperCase() == 'ACTIVE' &&
+                            b.status.toUpperCase() != 'ACTIVE') {
+                          return -1;
+                        } else if (a.status.toUpperCase() != 'ACTIVE' &&
+                            b.status.toUpperCase() == 'ACTIVE') {
+                          return 1;
+                        }
+                        return 0;
+                      });
+                    }
+              
+                    _currentFilteredKitchens = filteredKitchens;
+              
+                    // Get Options for Filter Dropdowns
+                    final hotelOptions = _getUniqueHotels(allKitchens);
+                    final storageOptions = _getUniqueStorages(allKitchens);
+              
+                    return Column(
+                      children: [
+                        // TOP BAR: Search | Add | Spacer | Hide Filters | Status Toggle
+                        _buildTopActionBar(
+                          context,
                           isMobile,
                           hotelOptions,
                           storageOptions,
                         ),
-
-                      const SizedBox(height: 20),
-
-                      // DELETE BUTTON ROW
-                      if (_showDeleteButton) _buildDeleteBar(),
-
-                      // TABLE
-                      _buildTable(filteredKitchens, isMobile),
-                    ],
-                  );
-                }
-
-                if (state is KitchenError) {
-                  return Center(child: Text(state.message));
-                }
-
-                return const SizedBox();
-              },
+              
+                        // FILTER SECTION (Collapsible)
+                        if (_showFilters)
+                          _buildFiltersSection(
+                            isMobile,
+                            hotelOptions,
+                            storageOptions,
+                          ),
+              
+                        const SizedBox(height: 20),
+              
+                        // DELETE BUTTON ROW
+                        if (_showDeleteButton) _buildDeleteBar(),
+              
+                        // TABLE
+                        _buildTable(filteredKitchens, isMobile),
+                      ],
+                    );
+                  }
+              
+                  if (state is KitchenError) {
+                    return Center(child: Text(state.message));
+                  }
+              
+                  return const SizedBox();
+                },
+              ),
             ),
           ),
         ),

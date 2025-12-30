@@ -31,6 +31,7 @@ class KitchenBloc extends Bloc<KitchenEvent, KitchenState> {
           status: event.status,
           storages: event.storages,
         );
+
         emit(KitchenSaved());
       } catch (e) {
         emit(KitchenError(e.toString()));

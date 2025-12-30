@@ -384,52 +384,58 @@ class _ProductFormPageState extends State<ProductFormPage> {
                     const SizedBox(height: 32),
                     Row(
                       children: [
-                        OutlinedButton(
-                          onPressed: () => context.pop(),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 48,
-                              vertical: 20,
+                        Expanded(
+                          flex: isMobile ? 1 : 0,
+                          child: OutlinedButton(
+                            onPressed: () => context.pop(),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isMobile ? 16 : 48,
+                                vertical: 20,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                            child: const Text("CANCEL"),
                           ),
-                          child: const Text("CANCEL"),
                         ),
                         const SizedBox(width: 16),
-                        BlocBuilder<ProductsBloc, ProductsState>(
-                          builder: (context, state) {
-                            if (state is ProductsSaving) {
-                              return const SizedBox(
-                                height: 48,
-                                width: 48,
-                                child: Center(
-                                  child: CircularProgressIndicator(),
+                        Expanded(
+                          flex: isMobile ? 1 : 0,
+                          child: BlocBuilder<ProductsBloc, ProductsState>(
+                            builder: (context, state) {
+                              if (state is ProductsSaving) {
+                                return const SizedBox(
+                                  height: 48,
+                                  width: 48,
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              }
+                              return ElevatedButton(
+                                onPressed: () => _save(context),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isMobile ? 16 : 48,
+                                    vertical: 20,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: const Text(
+                                  "SAVE",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               );
-                            }
-                            return ElevatedButton(
-                              onPressed: () => _save(context),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 48,
-                                  vertical: 20,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: const Text(
-                                "SAVE",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            );
-                          },
+                            },
+                          ),
                         ),
                       ],
                     ),

@@ -100,12 +100,36 @@ class HotelRepository {
     });
   }
 
-  // 🔹 Delete multiple hotels
+  // // 🔹 Delete multiple hotels
+  // Future<void> deleteHotels(List<String> hotelIds) async {
+  //   final batch = _db.batch();
+  //   for (final id in hotelIds) {
+  //     batch.delete(_db.collection('hotels').doc(id));
+  //   }
+  //   await batch.commit();
+  // }
   Future<void> deleteHotels(List<String> hotelIds) async {
-    final batch = _db.batch();
-    for (final id in hotelIds) {
-      batch.delete(_db.collection('hotels').doc(id));
+    for (final hotelId in hotelIds) {
+      final hotelRef = _db.collection('hotels').doc(hotelId);
+
+      final subCollections = [
+        'products',
+        'suppliers',
+        'dishes',
+        'kitchens',
+        'categories',
+        'operations'
+      ];
+
+      for (final col in subCollections) {
+        final snap = await hotelRef.collection(col).get();
+        for (final doc in snap.docs) {
+          await doc.reference.delete();
+        }
+      }
+
+      await hotelRef.delete();
     }
-    await batch.commit();
   }
+
 }

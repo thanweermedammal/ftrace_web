@@ -236,76 +236,82 @@ class _HotelFormPageState extends State<HotelFormPage> {
 
                         // BUTTONS
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                          mainAxisAlignment: isMobile
+                              ? MainAxisAlignment.start
+                              : MainAxisAlignment.end,
                           children: [
-                            OutlinedButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 16,
+                            Expanded(
+                              flex: isMobile ? 1 : 0,
+                              child: OutlinedButton(
+                                onPressed: () => Navigator.pop(context),
+                                style: OutlinedButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isMobile ? 16 : 24,
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
+                                child: const Text("CANCEL"),
                               ),
-                              child: const Text("CANCEL"),
                             ),
                             const SizedBox(width: 16),
-                            BlocBuilder<HotelBloc, HotelState>(
-                              builder: (context, state) {
-                                if (state is HotelSaving) {
-                                  return const SizedBox(
-                                    width: 48,
-                                    height: 48,
-                                    child: Center(
-                                      child: CircularProgressIndicator(),
+                            Expanded(
+                              flex: isMobile ? 1 : 0,
+                              child: BlocBuilder<HotelBloc, HotelState>(
+                                builder: (context, state) {
+                                  if (state is HotelSaving) {
+                                    return const SizedBox(
+                                      width: 48,
+                                      height: 48,
+                                      child: Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    );
+                                  }
+                                  return ElevatedButton(
+                                    onPressed: () {
+                                      if (_formKey.currentState!.validate()) {
+                                        if (isEditing) {
+                                          context.read<HotelBloc>().add(
+                                            UpdateHotel(
+                                              widget.hotel!.copyWith(
+                                                name: nameCtrl.text,
+                                                email: emailCtrl.text,
+                                                phone: phoneCtrl.text,
+                                                address: addressCtrl.text,
+                                                status: _status,
+                                              ),
+                                            ),
+                                          );
+                                        } else {
+                                          context.read<HotelBloc>().add(
+                                            AddHotel(name: nameCtrl.text),
+                                          );
+                                        }
+                                      }
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blue,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: isMobile ? 16 : 20,
+                                        vertical: 16,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      isEditing ? "UPDATE" : "SAVE HOTEL",
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   );
-                                }
-                                return ElevatedButton(
-                                  onPressed: () {
-                                    if (_formKey.currentState!.validate()) {
-                                      if (isEditing) {
-                                        // UPDATE
-                                        context.read<HotelBloc>().add(
-                                          UpdateHotel(
-                                            widget.hotel!.copyWith(
-                                              name: nameCtrl.text,
-                                              email: emailCtrl.text,
-                                              phone: phoneCtrl.text,
-                                              address: addressCtrl.text,
-                                              status: _status,
-                                            ),
-                                          ),
-                                        );
-                                      } else {
-                                        // ADD
-                                        context.read<HotelBloc>().add(
-                                          AddHotel(name: nameCtrl.text),
-                                        );
-                                      }
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blue,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 16,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    isEditing ? "UPDATE" : "SAVE HOTEL",
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                );
-                              },
+                                },
+                              ),
                             ),
                           ],
                         ),

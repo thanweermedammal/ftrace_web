@@ -94,25 +94,36 @@ class KitchenDetailPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 32),
 
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // LEFT COLUMN
-                        Expanded(
-                          flex: 2,
-                          child: Column(
-                            children: [
-                              _basicInfoCard(currentKitchen),
-                              const SizedBox(height: 24),
-                              _assignedStoragesCard(context, currentKitchen),
-                            ],
+                    if (isMobile)
+                      Column(
+                        children: [
+                          _basicInfoCard(currentKitchen),
+                          const SizedBox(height: 24),
+                          _assignedStoragesCard(context, currentKitchen),
+                          const SizedBox(height: 24),
+                          _statusCard(currentKitchen),
+                        ],
+                      )
+                    else
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // LEFT COLUMN
+                          Expanded(
+                            flex: 2,
+                            child: Column(
+                              children: [
+                                _basicInfoCard(currentKitchen),
+                                const SizedBox(height: 24),
+                                _assignedStoragesCard(context, currentKitchen),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 24),
-                        // RIGHT COLUMN
-                        Expanded(flex: 1, child: _statusCard(currentKitchen)),
-                      ],
-                    ),
+                          const SizedBox(width: 24),
+                          // RIGHT COLUMN
+                          Expanded(flex: 1, child: _statusCard(currentKitchen)),
+                        ],
+                      ),
                   ],
                 ),
               ),

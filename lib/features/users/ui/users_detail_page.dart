@@ -102,7 +102,7 @@ class UserDetailPage extends StatelessWidget {
                     if (isMobile)
                       Column(
                         children: [
-                          _leftColumn(context, currentUser),
+                          _leftColumn(context, currentUser,isMobile),
                           const SizedBox(height: 24),
                           _rightColumn(currentUser),
                         ],
@@ -113,7 +113,7 @@ class UserDetailPage extends StatelessWidget {
                         children: [
                           Expanded(
                             flex: 2,
-                            child: _leftColumn(context, currentUser),
+                            child: _leftColumn(context, currentUser,isMobile),
                           ),
                           const SizedBox(width: 24),
                           Expanded(flex: 1, child: _rightColumn(currentUser)),
@@ -129,14 +129,14 @@ class UserDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _leftColumn(BuildContext context, UserModel currentUser) {
+  Widget _leftColumn(BuildContext context, UserModel currentUser,isMobile) {
     return Column(
       children: [
         _basicInfoCard(currentUser),
         const SizedBox(height: 24),
-        _assignedHotelsCard(context, currentUser),
+        _assignedHotelsCard(context, currentUser,isMobile),
         const SizedBox(height: 24),
-        _assignedKitchensCard(context, currentUser),
+        _assignedKitchensCard(context, currentUser,isMobile),
       ],
     );
   }
@@ -217,7 +217,7 @@ class UserDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _assignedHotelsCard(BuildContext context, UserModel currentUser) {
+  Widget _assignedHotelsCard(BuildContext context, UserModel currentUser,isMobile) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -233,28 +233,60 @@ class UserDetailPage extends StatelessWidget {
                 "Assigned Hotels",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
+
               const Spacer(),
-              TextButton(
-                onPressed: () => context.push('/hotels'),
-                child: const Text("View All Hotels"),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: () => _showAddHotelDialog(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+              if(!isMobile)
+                Row(
+                  children: [TextButton(
+                    onPressed: () => context.push('/hotels'),
+                    child: const Text("View All Hotels"),
                   ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: () => _showAddHotelDialog(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                      ),
+                      icon: const Icon(Icons.add, size: 16, color: Colors.white),
+                      label: const Text(
+                        "Add Hotel",
+                        style: TextStyle(color: Colors.white, fontSize: 13),
+                      ),
+                    ),],
                 ),
-                icon: const Icon(Icons.add, size: 16, color: Colors.white),
-                label: const Text(
-                  "Add Hotel",
-                  style: TextStyle(color: Colors.white, fontSize: 13),
-                ),
-              ),
+              if(isMobile)
+                Column(
+                  children: [
+                    TextButton(
+                      onPressed: () => context.push('/hotels'),
+                      child: const Text("View All Hotels"),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: () => _showAddHotelDialog(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                      ),
+                      icon: const Icon(Icons.add, size: 16, color: Colors.white),
+                      label: const Text(
+                        "Add Hotel",
+                        style: TextStyle(color: Colors.white, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                )
+
+
             ],
           ),
           const SizedBox(height: 24),
@@ -297,7 +329,7 @@ class UserDetailPage extends StatelessWidget {
             )
           else
             ...currentUser.hotelNames.map(
-              (name) => Container(
+                  (name) => Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
@@ -317,7 +349,7 @@ class UserDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _assignedKitchensCard(BuildContext context, UserModel currentUser) {
+  Widget _assignedKitchensCard(BuildContext context, UserModel currentUser,isMobile) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -334,27 +366,59 @@ class UserDetailPage extends StatelessWidget {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
-              TextButton(
-                onPressed: () => context.push('/kitchen'),
-                child: const Text("View All Kitchens"),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: () => _showAddKitchenDialog(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
+              if(!isMobile)
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () => context.push('/kitchen'),
+                      child: const Text("View All Kitchens"),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: () => _showAddKitchenDialog(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                      ),
+                      icon: const Icon(Icons.add, size: 16, color: Colors.white),
+                      label: const Text(
+                        "Add Kitchen",
+                        style: TextStyle(color: Colors.white, fontSize: 13),
+                      ),
+                    ),
+                  ],
                 ),
-                icon: const Icon(Icons.add, size: 16, color: Colors.white),
-                label: const Text(
-                  "Add Kitchen",
-                  style: TextStyle(color: Colors.white, fontSize: 13),
-                ),
-              ),
+              if(isMobile)
+                Column(
+                  children: [
+                    TextButton(
+                      onPressed: () => context.push('/kitchen'),
+                      child: const Text("View All Kitchens"),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: () => _showAddKitchenDialog(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                      ),
+                      icon: const Icon(Icons.add, size: 16, color: Colors.white),
+                      label: const Text(
+                        "Add Kitchen",
+                        style: TextStyle(color: Colors.white, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                )
+
             ],
           ),
           const SizedBox(height: 24),
@@ -397,7 +461,7 @@ class UserDetailPage extends StatelessWidget {
             )
           else
             ...currentUser.kitchenIds.map(
-              (id) => Container(
+                  (id) => Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
@@ -559,7 +623,7 @@ class UserDetailPage extends StatelessWidget {
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText:
-                      'Enter hotel names separated by commas (e.g., Hotel A, Hotel B, Hotel C)',
+                  'Enter hotel names separated by commas (e.g., Hotel A, Hotel B, Hotel C)',
                   hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -602,7 +666,7 @@ class UserDetailPage extends StatelessWidget {
 
   void _showAddKitchenDialog(BuildContext context) {
     final TextEditingController kitchenNamesController =
-        TextEditingController();
+    TextEditingController();
 
     showDialog(
       context: context,
@@ -624,7 +688,7 @@ class UserDetailPage extends StatelessWidget {
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText:
-                      'Enter kitchen names separated by commas (e.g., Kitchen A, Kitchen B, Kitchen C)',
+                  'Enter kitchen names separated by commas (e.g., Kitchen A, Kitchen B, Kitchen C)',
                   hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),

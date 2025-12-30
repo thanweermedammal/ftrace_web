@@ -1,449 +1,20 @@
-// import 'package:flutter/material.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ftrace_web/features/kitchen/bloc/form_bloc/kitchen_form_bloc.dart';
+import 'package:ftrace_web/features/kitchen/bloc/form_bloc/kitchen_form_event.dart';
+import 'package:ftrace_web/features/kitchen/bloc/form_bloc/kitchen_form_state.dart';
 // import '../bloc/kitchen_bloc.dart';
 // import '../bloc/kitchen_event.dart';
 // import '../bloc/kitchen_state.dart';
-// import '../model/kitchen_model.dart';
-// import 'package:ftrace_web/features/hotels/bloc/hotel_bloc.dart';
-// import 'package:ftrace_web/features/hotels/bloc/hotel_event.dart';
-// import 'package:ftrace_web/features/hotels/bloc/hotel_state.dart';
-// import 'package:ftrace_web/features/hotels/model/hotel_model.dart';
-//
-// class KitchenFormPage extends StatefulWidget {
-//   final String? hotelId;
-//   final KitchenModel? kitchen;
-//   const KitchenFormPage({super.key, this.hotelId, this.kitchen});
-//
-//   @override
-//   State<KitchenFormPage> createState() => _KitchenFormPageState();
-// }
-//
-// class _KitchenFormPageState extends State<KitchenFormPage> {
-//   late TextEditingController _nameController;
-//   String? _selectedHotelId;
-//   String? _selectedHotelName;
-//   String _status = 'Active';
-//   List<String> _selectedStorages = [];
-//
-//   final List<String> _storageOptions = [
-//     'Chilled Storage',
-//     'Frozen Storage',
-//     'Dry Storage',
-//     'Ambient Storage',
-//   ];
-//
-//   @override
-//   void initState() {
-//     super.initState();
-//     _nameController = TextEditingController(text: widget.kitchen?.name ?? '');
-//     _selectedHotelId = widget.hotelId ?? widget.kitchen?.hotelId;
-//     _selectedHotelName = widget.kitchen?.hotelName;
-//     _status = widget.kitchen?.status ?? 'Active';
-//     _selectedStorages = widget.kitchen?.storages ?? [];
-//
-//     context.read<HotelBloc>().add(LoadHotels());
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     final width = MediaQuery.of(context).size.width;
-//     final isMobile = width < 900;
-//
-//     return Column(
-//       children: [
-//         if (isMobile)
-//           AppBar(
-//             backgroundColor: Colors.white,
-//             elevation: 0.5,
-//             leading: Builder(
-//               builder: (context) => IconButton(
-//                 icon: const Icon(Icons.menu, color: Colors.black),
-//                 onPressed: () => Scaffold.of(context).openDrawer(),
-//               ),
-//             ),
-//             title: const Text(
-//               "Kitchen Form",
-//               style: TextStyle(color: Colors.black, fontSize: 18),
-//             ),
-//           ),
-//         Expanded(
-//           child: BlocListener<KitchenBloc, KitchenState>(
-//             listener: (context, state) {
-//               if (state is KitchenSaved) {
-//                 Navigator.pop(context);
-//               }
-//             },
-//             child: SingleChildScrollView(
-//               padding: const EdgeInsets.all(24),
-//               child: Container(
-//                 decoration: BoxDecoration(
-//                   color: Colors.white,
-//                   borderRadius: BorderRadius.circular(12),
-//                 ),
-//                 padding: const EdgeInsets.all(32),
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     Text(
-//                       widget.kitchen == null
-//                           ? "Add New Kitchen"
-//                           : "Edit Kitchen",
-//                       style: const TextStyle(
-//                         fontSize: 20,
-//                         fontWeight: FontWeight.bold,
-//                       ),
-//                     ),
-//                     const SizedBox(height: 32),
-//                     if (isMobile)
-//                       Column(
-//                         crossAxisAlignment: CrossAxisAlignment.start,
-//                         children: [
-//                           _label("Select Hotel", required: true),
-//                           BlocBuilder<HotelBloc, HotelState>(
-//                             builder: (context, state) {
-//                               List<HotelModel> hotels = [];
-//                               if (state is HotelLoaded) {
-//                                 hotels = state.hotels;
-//                               }
-//                               return DropdownButtonFormField<String>(
-//                                 isExpanded: true,
-//                                 value: _selectedHotelId,
-//                                 hint: const Text("Select Select Hotel"),
-//                                 decoration: _inputDecoration(),
-//                                 items: hotels
-//                                     .map(
-//                                       (h) => DropdownMenuItem(
-//                                         value: h.id,
-//                                         child: Text(h.name),
-//                                       ),
-//                                     )
-//                                     .toList(),
-//                                 onChanged: (v) {
-//                                   setState(() {
-//                                     _selectedHotelId = v;
-//                                     _selectedHotelName = hotels
-//                                         .firstWhere((h) => h.id == v)
-//                                         .name;
-//                                   });
-//                                 },
-//                               );
-//                             },
-//                           ),
-//                           const SizedBox(height: 24),
-//                           _label("Kitchen Name", required: true),
-//                           TextField(
-//                             controller: _nameController,
-//                             decoration: _inputDecoration(
-//                               hint: "Enter kitchen name",
-//                             ),
-//                           ),
-//                           const SizedBox(height: 24),
-//                           _label("Assign Storages"),
-//                           DropdownButtonFormField<String>(
-//                             isExpanded: true,
-//                             hint: Text(
-//                               _selectedStorages.isEmpty
-//                                   ? "Select Assign Storages"
-//                                   : _selectedStorages.join(", "),
-//                               overflow: TextOverflow.ellipsis,
-//                             ),
-//                             decoration: _inputDecoration(),
-//                             items: _storageOptions
-//                                 .map(
-//                                   (s) => DropdownMenuItem(
-//                                     value: s,
-//                                     child: Row(
-//                                       children: [
-//                                         Checkbox(
-//                                           value: _selectedStorages.contains(s),
-//                                           onChanged: (v) {
-//                                             setState(() {
-//                                               if (v!) {
-//                                                 _selectedStorages.add(s);
-//                                               } else {
-//                                                 _selectedStorages.remove(s);
-//                                               }
-//                                             });
-//                                           },
-//                                         ),
-//                                         Text(s),
-//                                       ],
-//                                     ),
-//                                   ),
-//                                 )
-//                                 .toList(),
-//                             onChanged: (v) {},
-//                           ),
-//                           const SizedBox(height: 24),
-//                           _label("Status", required: true),
-//                           DropdownButtonFormField<String>(
-//                             isExpanded: true,
-//                             value: _status,
-//                             decoration: _inputDecoration(),
-//                             items: ['Active', 'Inactive']
-//                                 .map(
-//                                   (s) => DropdownMenuItem(
-//                                     value: s,
-//                                     child: Text(s),
-//                                   ),
-//                                 )
-//                                 .toList(),
-//                             onChanged: (v) => setState(() => _status = v!),
-//                           ),
-//                         ],
-//                       )
-//                     else
-//                       Row(
-//                         crossAxisAlignment: CrossAxisAlignment.start,
-//                         children: [
-//                           // LEFT COLUMN
-//                           Expanded(
-//                             child: Column(
-//                               crossAxisAlignment: CrossAxisAlignment.start,
-//                               children: [
-//                                 _label("Select Hotel", required: true),
-//                                 BlocBuilder<HotelBloc, HotelState>(
-//                                   builder: (context, state) {
-//                                     List<HotelModel> hotels = [];
-//                                     if (state is HotelLoaded) {
-//                                       hotels = state.hotels;
-//                                     }
-//                                     return DropdownButtonFormField<String>(
-//                                       isExpanded: true,
-//                                       value: _selectedHotelId,
-//                                       hint: const Text("Select Select Hotel"),
-//                                       decoration: _inputDecoration(),
-//                                       items: hotels
-//                                           .map(
-//                                             (h) => DropdownMenuItem(
-//                                               value: h.id,
-//                                               child: Text(h.name),
-//                                             ),
-//                                           )
-//                                           .toList(),
-//                                       onChanged: (v) {
-//                                         setState(() {
-//                                           _selectedHotelId = v;
-//                                           _selectedHotelName = hotels
-//                                               .firstWhere((h) => h.id == v)
-//                                               .name;
-//                                         });
-//                                       },
-//                                     );
-//                                   },
-//                                 ),
-//                                 const SizedBox(height: 24),
-//                                 _label("Status", required: true),
-//                                 DropdownButtonFormField<String>(
-//                                   isExpanded: true,
-//                                   value: _status,
-//                                   decoration: _inputDecoration(),
-//                                   items: ['Active', 'Inactive']
-//                                       .map(
-//                                         (s) => DropdownMenuItem(
-//                                           value: s,
-//                                           child: Text(s),
-//                                         ),
-//                                       )
-//                                       .toList(),
-//                                   onChanged: (v) =>
-//                                       setState(() => _status = v!),
-//                                 ),
-//                               ],
-//                             ),
-//                           ),
-//                           const SizedBox(width: 32),
-//                           // RIGHT COLUMN
-//                           Expanded(
-//                             child: Column(
-//                               crossAxisAlignment: CrossAxisAlignment.start,
-//                               children: [
-//                                 _label("Kitchen Name", required: true),
-//                                 TextField(
-//                                   controller: _nameController,
-//                                   decoration: _inputDecoration(
-//                                     hint: "Enter kitchen name",
-//                                   ),
-//                                 ),
-//                                 const SizedBox(height: 24),
-//                                 _label("Assign Storages"),
-//                                 DropdownButtonFormField<String>(
-//                                   isExpanded: true,
-//                                   hint: Text(
-//                                     _selectedStorages.isEmpty
-//                                         ? "Select Assign Storages"
-//                                         : _selectedStorages.join(", "),
-//                                     overflow: TextOverflow.ellipsis,
-//                                   ),
-//                                   decoration: _inputDecoration(),
-//                                   items: _storageOptions
-//                                       .map(
-//                                         (s) => DropdownMenuItem(
-//                                           value: s,
-//                                           child: Row(
-//                                             children: [
-//                                               Checkbox(
-//                                                 value: _selectedStorages
-//                                                     .contains(s),
-//                                                 onChanged: (v) {
-//                                                   setState(() {
-//                                                     if (v!) {
-//                                                       _selectedStorages.add(s);
-//                                                     } else {
-//                                                       _selectedStorages.remove(
-//                                                         s,
-//                                                       );
-//                                                     }
-//                                                   });
-//                                                 },
-//                                               ),
-//                                               Text(s),
-//                                             ],
-//                                           ),
-//                                         ),
-//                                       )
-//                                       .toList(),
-//                                   onChanged: (v) {},
-//                                 ),
-//                               ],
-//                             ),
-//                           ),
-//                         ],
-//                       ),
-//                     const SizedBox(height: 48),
-//                     Row(
-//                       children: [
-//                         OutlinedButton(
-//                           onPressed: () => Navigator.pop(context),
-//                           style: OutlinedButton.styleFrom(
-//                             padding: const EdgeInsets.symmetric(
-//                               horizontal: 32,
-//                               vertical: 20,
-//                             ),
-//                             backgroundColor: Colors.grey.shade100,
-//                             side: BorderSide.none,
-//                             shape: RoundedRectangleBorder(
-//                               borderRadius: BorderRadius.circular(8),
-//                             ),
-//                           ),
-//                           child: const Text(
-//                             "CANCEL",
-//                             style: TextStyle(
-//                               color: Colors.black,
-//                               fontWeight: FontWeight.bold,
-//                             ),
-//                           ),
-//                         ),
-//                         const SizedBox(width: 16),
-//                         ElevatedButton(
-//                           onPressed: () {
-//                             if (_selectedHotelId != null &&
-//                                 _nameController.text.isNotEmpty) {
-//                               if (widget.kitchen == null) {
-//                                 context.read<KitchenBloc>().add(
-//                                   AddKitchen(
-//                                     hotelId: _selectedHotelId!,
-//                                     hotelName: _selectedHotelName ?? '',
-//                                     name: _nameController.text,
-//                                     status: _status,
-//                                     storages: _selectedStorages,
-//                                   ),
-//                                 );
-//                               } else {
-//                                 context.read<KitchenBloc>().add(
-//                                   UpdateKitchen(
-//                                     widget.kitchen!.copyWith(
-//                                       hotelId: _selectedHotelId!,
-//                                       hotelName: _selectedHotelName ?? '',
-//                                       name: _nameController.text,
-//                                       status: _status,
-//                                       storages: _selectedStorages,
-//                                     ),
-//                                   ),
-//                                 );
-//                               }
-//                             }
-//                           },
-//                           style: ElevatedButton.styleFrom(
-//                             backgroundColor: Colors.blue,
-//                             padding: const EdgeInsets.symmetric(
-//                               horizontal: 48,
-//                               vertical: 20,
-//                             ),
-//                             shape: RoundedRectangleBorder(
-//                               borderRadius: BorderRadius.circular(8),
-//                             ),
-//                           ),
-//                           child: const Text(
-//                             "SAVE",
-//                             style: TextStyle(
-//                               color: Colors.white,
-//                               fontWeight: FontWeight.bold,
-//                             ),
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-//
-//   Widget _label(String text, {bool required = false}) {
-//     return Padding(
-//       padding: const EdgeInsets.only(bottom: 8),
-//       child: RichText(
-//         text: TextSpan(
-//           text: text,
-//           style: const TextStyle(
-//             color: Colors.black87,
-//             fontWeight: FontWeight.w500,
-//             fontSize: 13,
-//           ),
-//           children: [
-//             if (required)
-//               const TextSpan(
-//                 text: " *",
-//                 style: TextStyle(color: Colors.red),
-//               ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-//
-//   InputDecoration _inputDecoration({String? hint}) {
-//     return InputDecoration(
-//       hintText: hint,
-//       filled: true,
-//       fillColor: Colors.white,
-//       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-//       border: OutlineInputBorder(
-//         borderRadius: BorderRadius.circular(8),
-//         borderSide: BorderSide(color: Colors.grey.shade300),
-//       ),
-//       enabledBorder: OutlineInputBorder(
-//         borderRadius: BorderRadius.circular(8),
-//         borderSide: BorderSide(color: Colors.grey.shade300),
-//       ),
-//     );
-//   }
-// }
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/kitchen_bloc.dart';
-import '../bloc/kitchen_event.dart';
-import '../bloc/kitchen_state.dart';
 import '../model/kitchen_model.dart';
 import 'package:ftrace_web/features/hotels/bloc/hotel_bloc.dart';
 import 'package:ftrace_web/features/hotels/bloc/hotel_event.dart';
 import 'package:ftrace_web/features/hotels/bloc/hotel_state.dart';
 import 'package:ftrace_web/features/hotels/model/hotel_model.dart';
+// import 'package:ftrace_web/features/auth/bloc/auth_bloc.dart';
+// import 'package:ftrace_web/features/auth/bloc/auth_state.dart';
+// import 'package:ftrace_web/features/users/model/users_model.dart';
 
 class KitchenFormPage extends StatefulWidget {
   final String? hotelId;
@@ -501,9 +72,18 @@ class _KitchenFormPageState extends State<KitchenFormPage> {
           ),
 
         Expanded(
-          child: BlocListener<KitchenBloc, KitchenState>(
+          child: BlocListener<KitchenFormBloc, KitchenFormState>(
             listener: (context, state) {
-              if (state is KitchenSaved) {
+              if (state is KitchenFormSaved) {
+                // Reload kitchens to refresh the list
+                // final authState = context.read<AuthBloc>().state;
+                // UserModel? user;
+                // if (authState is AuthSuccess) {
+                //   user = authState.user;
+                // }
+                // context.read<KitchenBloc>().add(
+                //   LoadKitchens(hotelId: '', currentUser: user),
+                // );
                 Navigator.pop(context);
               }
             },
@@ -713,46 +293,56 @@ class _KitchenFormPageState extends State<KitchenFormPage> {
   // ---------------- ACTION BUTTONS ----------------
 
   Widget _actionButtons() {
+    final isMobile = MediaQuery.of(context).size.width < 900;
     return Row(
       children: [
-        OutlinedButton(
-          onPressed: () => Navigator.pop(context),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+        Expanded(
+          flex: isMobile ? 1 : 0,
+          child: OutlinedButton(
+            onPressed: () => Navigator.pop(context),
+            style: OutlinedButton.styleFrom(
+              padding: EdgeInsets.symmetric(
+                horizontal: isMobile ? 16 : 24,
+                vertical: 16,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
+            child: const Text("CANCEL"),
           ),
-          child: const Text("CANCEL"),
         ),
         const SizedBox(width: 16),
-        BlocBuilder<KitchenBloc, KitchenState>(
-          builder: (context, state) {
-            if (state is KitchenSaving) {
-              return const SizedBox(
-                width: 48, // Match standard button height approx
-                height: 48,
-                child: Center(child: CircularProgressIndicator()),
+        Expanded(
+          flex: isMobile ? 1 : 0,
+          child: BlocBuilder<KitchenFormBloc, KitchenFormState>(
+            builder: (context, state) {
+              if (state is KitchenFormSaving) {
+                return const SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              return ElevatedButton(
+                onPressed: _onSave,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 16 : 20,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  widget.kitchen == null ? "SAVE" : "UPDATE",
+                  style: const TextStyle(fontSize: 14, color: Colors.white),
+                ),
               );
-            }
-            return ElevatedButton(
-              onPressed: _onSave,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                widget.kitchen == null ? "SAVE" : "UPDATE",
-                style: const TextStyle(fontSize: 16, color: Colors.white),
-              ),
-            );
-          },
+            },
+          ),
         ),
       ],
     );
@@ -781,8 +371,8 @@ class _KitchenFormPageState extends State<KitchenFormPage> {
     }
 
     if (widget.kitchen == null) {
-      context.read<KitchenBloc>().add(
-        AddKitchen(
+      context.read<KitchenFormBloc>().add(
+        AddKitchenForm(
           hotelId: _selectedHotelId!,
           hotelName: hotelName,
           name: _nameController.text,
@@ -791,8 +381,8 @@ class _KitchenFormPageState extends State<KitchenFormPage> {
         ),
       );
     } else {
-      context.read<KitchenBloc>().add(
-        UpdateKitchen(
+      context.read<KitchenFormBloc>().add(
+        UpdateKitchenForm(kitchen:
           widget.kitchen!.copyWith(
             hotelId: _selectedHotelId!,
             hotelName: hotelName,

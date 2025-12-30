@@ -21,6 +21,7 @@ import 'package:ftrace_web/features/users/data/users_repository.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/dashboard/bloc/dashboard_bloc.dart';
 import 'features/dashboard/data/dashboard_repository.dart';
+import 'features/kitchen/bloc/form_bloc/kitchen_form_bloc.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -61,6 +62,9 @@ class MyApp extends StatelessWidget {
           ),
           BlocProvider(
             create: (context) => KitchenBloc(context.read<KitchenRepository>()),
+          ),
+          BlocProvider(
+            create: (context) => KitchenFormBloc(context.read<KitchenRepository>()),
           ),
           BlocProvider(
             create: (context) => UserBloc(context.read<UserRepository>()),

@@ -265,46 +265,54 @@ class _SupplierFormPageState extends State<SupplierFormPage> {
                           const SizedBox(height: 32),
                           Row(
                             children: [
-                              OutlinedButton(
-                                onPressed: () => context.pop(),
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFF8F9FB),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 48,
-                                    vertical: 20,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  side: BorderSide(color: Colors.grey.shade100),
-                                ),
-                                child: const Text(
-                                  "CANCEL",
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Builder(
-                                builder: (bCtx) => ElevatedButton(
-                                  onPressed: () => _save(bCtx),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blue,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 48,
+                              Expanded(
+                                flex: isMobile ? 1 : 0,
+                                child: OutlinedButton(
+                                  onPressed: () => context.pop(),
+                                  style: OutlinedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFF8F9FB),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isMobile ? 16 : 48,
                                       vertical: 20,
                                     ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
+                                    side: BorderSide(
+                                      color: Colors.grey.shade100,
+                                    ),
                                   ),
-                                  child: Text(
-                                    isEditing ? "UPDATE" : "SAVE",
-                                    style: const TextStyle(
-                                      color: Colors.white,
+                                  child: const Text(
+                                    "CANCEL",
+                                    style: TextStyle(
+                                      color: Colors.black,
                                       fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                flex: isMobile ? 1 : 0,
+                                child: Builder(
+                                  builder: (bCtx) => ElevatedButton(
+                                    onPressed: () => _save(bCtx),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blue,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: isMobile ? 16 : 48,
+                                        vertical: 20,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      isEditing ? "UPDATE" : "SAVE",
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),
